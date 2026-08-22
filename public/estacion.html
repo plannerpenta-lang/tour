@@ -20,19 +20,6 @@
   <div class="grid-personajes" id="grid-personajes"></div>
 </div>
 
-<div id="pantalla-verificar" class="screen">
-  <div class="avatar-hero" id="verificar-avatar"></div>
-  <h1 id="verificar-pregunta"></h1>
-  <p class="subtitulo">Ingresa los <b>últimos 4 dígitos</b><br>del celular con el que te registraste</p>
-  <form class="tarjeta-forma" style="align-items:center" onsubmit="verificarIdentidad(event)">
-    <input type="password" id="campo-digitos" inputmode="numeric" maxlength="4"
-      placeholder="••••" required autocomplete="off"
-      style="text-align:center; font-size:32px; letter-spacing:14px; width:220px">
-    <button type="submit" class="boton">Continuar →</button>
-    <button type="button" class="boton secundario" onclick="mostrarPantalla('pantalla-personajes')">← No soy yo</button>
-  </form>
-</div>
-
 <div id="pantalla-sesion" class="screen">
   <div class="avatar-hero" id="sesion-avatar"></div>
   <h1>¡Hola, <span id="sesion-usuario"></span>!</h1>
@@ -58,7 +45,6 @@ const params = new URLSearchParams(location.search);
 const CODIGO = params.get('e') || 'e1';
 let estacion = null;
 let sesionActual = null;
-let personajePendiente = null;
 
 async function iniciar() {
   try {
@@ -87,25 +73,15 @@ async function cargarPersonajes() {
       const card = document.createElement('div');
       card.className = 'personaje-card';
       card.innerHTML = `<span class="personaje-emoji">${p.avatar}</span><span class="personaje-nombre">${p.nombre}</span>`;
-      card.onclick = () => elegir(p);
+      card.onclick = () => identificar(p);
       grid.appendChild(card);
     }
   } catch { grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Error de conexión…</p>'; }
 }
 
-function elegir(p) {
-  personajePendiente = p;
-  document.getElementById('verificar-avatar').textContent = p.avatar;
-  document.getElementById('verificar-pregunta').textContent = `¿Eres tú, ${p.nombre}?`;
-  document.getElementById('campo-digitos').value = '';
-  mostrarPantalla('pantalla-verificar');
-}
-
-async function verificarIdentidad(e) {
-  e.preventDefault();
-  const digitos = document.getElementById('campo-digitos').value;
+async function identificar(p) {
   try {
-    sesionActual = await api('POST', '/totem/login', { personaje_id: personajePendiente.id, digitos });
+    sesionActual = await api('POST', '/totem/login', { personaje_id: p.id });
     document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
     document.getElementById('sesion-usuario').textContent = sesionActual.usuario.split(' ')[0];
     document.getElementById('sesion-puntos').textContent = sesionActual.puntos;
@@ -122,11 +98,7 @@ async function verificarIdentidad(e) {
       boton.disabled = false;
     }
     mostrarPantalla('pantalla-sesion');
-  } catch (err) {
-    toast(err.message);
-    document.getElementById('campo-digitos').value = '';
-    document.getElementById('campo-digitos').focus();
-  }
+  } catch (err) { toast(err.message); await cargarPersonajes(); }
 }
 
 async function registrarVisita() {

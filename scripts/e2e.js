@@ -45,12 +45,11 @@ function check(nombre, cond, detalle) {
   check('Rechaza personaje ya tomado', robo.status === 409, robo);
 
   console.log('--- 4. Login en estación intermedia ---');
-  const login = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '4567' });
+  const login = await api('POST', '/totem/login', { personaje_id: zorro.id });
   check('Tótem identifica al usuario', login.status === 200 && login.data.usuario === 'Ana Pérez', login);
-  const sinDigitos = await api('POST', '/totem/login', { personaje_id: zorro.id });
-  check('Rechaza login sin dígitos', sinDigitos.status === 401, sinDigitos);
+  check('No expone el teléfono', login.data.telefono === undefined, login.data);
 
-  const trasVisitas0 = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '4567' });
+  const trasVisitas0 = await api('POST', '/totem/login', { personaje_id: zorro.id });
   check('Puntos iniciales = 0', trasVisitas0.data.puntos === 0, trasVisitas0.data);
 
   console.log('--- 5. Visitas a las 4 estaciones ---');
@@ -61,7 +60,7 @@ function check(nombre, cond, detalle) {
   const dup = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1' });
   check('Rechaza estación repetida', dup.status === 409, dup);
 
-  const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '4567' });
+  const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id });
   check('Puntos acumulados = 400', trasVisitas.data.puntos === 400, trasVisitas.data);
 
   console.log('--- 6. Finalización y premio (protegida con PIN) ---');
@@ -80,11 +79,7 @@ function check(nombre, cond, detalle) {
   const reuso = await api('POST', '/sesiones', { usuario_id: otroUser.data.id, personaje_id: zorro.id });
   check('Otro usuario puede tomarlo', reuso.status === 201, reuso);
 
-  console.log('--- 8. Anti-suplantación (últimos 4 dígitos) ---');
-  const digitosMalos = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '0000' });
-  check('Rechaza dígitos incorrectos', digitosMalos.status === 401, digitosMalos);
-  const digitosBuenos = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '6543' });
-  check('Acepta dígitos correctos', digitosBuenos.status === 200, digitosBuenos);
+  console.log('--- 8. Reuso del personaje tras liberación ---');
 
   console.log('--- 9. Liberación voluntaria ---');
   const libera = await api('POST', '/sesiones/liberar', { sesion_id: reuso.data.id });

@@ -65,11 +65,11 @@ router.post('/sesiones', (req, res) => {
   }
 });
 
-// El totem verifica la identidad con los últimos 4 dígitos del celular
+// El totem identifica al usuario por su personaje
 router.post('/totem/login', (req, res) => {
-  const { personaje_id, digitos } = req.body || {};
+  const { personaje_id } = req.body || {};
   const fila = db.prepare(`
-    SELECT s.id AS sesion_id, s.estado, u.nombre AS usuario, u.telefono, p.nombre AS personaje, p.avatar,
+    SELECT s.id AS sesion_id, s.estado, u.nombre AS usuario, p.nombre AS personaje, p.avatar,
            COALESCE((SELECT SUM(puntos) FROM visitas WHERE sesion_id = s.id), 0) AS puntos
     FROM sesiones s
     JOIN usuarios u ON u.id = s.usuario_id
@@ -79,12 +79,7 @@ router.post('/totem/login', (req, res) => {
 
   if (!fila) return res.status(404).json({ error: 'Este personaje no tiene un recorrido activo' });
 
-  if (fila.telefono && String(fila.telefono).slice(-4) !== String(digitos || '')) {
-    return res.status(401).json({ error: 'Los dígitos no coinciden con el celular registrado' });
-  }
-
   db.prepare('UPDATE sesiones SET ultima_actividad_en = ? WHERE id = ?').run(ahora(), fila.sesion_id);
-  delete fila.telefono;
   fila.visitadas = db.prepare(`
     SELECT e.codigo, e.nombre, v.puntos, v.timestamp
     FROM visitas v JOIN estaciones e ON e.id = v.estacion_id
