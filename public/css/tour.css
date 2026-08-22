@@ -1,0 +1,171 @@
+:root {
+  --bg: #0f1226;
+  --bg2: #1a1f3d;
+  --card: #232a52;
+  --card-hover: #2e3770;
+  --accent: #7c5cff;
+  --accent2: #00d4ff;
+  --ok: #2ecc71;
+  --warn: #f39c12;
+  --err: #e74c3c;
+  --text: #ffffff;
+  --muted: #9aa3c7;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: radial-gradient(ellipse at top, var(--bg2), var(--bg) 70%);
+  color: var(--text);
+  overflow: hidden;
+  user-select: none;
+}
+
+.screen {
+  display: none;
+  height: 100vh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.screen.activa { display: flex; }
+
+h1 { font-size: clamp(28px, 4vw, 48px); margin-bottom: 8px; }
+.subtitulo { color: var(--muted); font-size: clamp(14px, 1.6vw, 20px); margin-bottom: 32px; text-align: center; }
+
+.tarjeta-forma {
+  background: var(--card);
+  border-radius: 24px;
+  padding: 32px;
+  width: min(520px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+input[type="text"], input[type="tel"], input[type="email"] {
+  background: var(--bg);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 18px;
+  padding: 16px;
+  outline: none;
+  transition: border-color .2s;
+}
+input:focus { border-color: var(--accent); }
+
+.check-linea { display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--muted); cursor: pointer; }
+.check-linea input { width: 22px; height: 22px; accent-color: var(--accent); margin-top: 2px; flex-shrink: 0; }
+
+.boton {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 18px;
+  transition: transform .1s, opacity .2s;
+}
+.boton:active { transform: scale(.97); }
+.boton:disabled { opacity: .35; cursor: not-allowed; }
+.boton.secundario { background: var(--card-hover); }
+.boton.grande { font-size: 26px; padding: 26px; width: min(480px, 90vw); }
+
+.grid-personajes {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: min(900px, 94vw);
+}
+@media (max-width: 700px) { .grid-personajes { grid-template-columns: repeat(3, 1fr); } }
+
+.personaje-card {
+  align-items: center;
+  aspect-ratio: 1;
+  background: var(--card);
+  border: 3px solid transparent;
+  border-radius: 20px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  transition: transform .1s, border-color .15s, background .15s;
+}
+.personaje-card:active { transform: scale(.94); }
+.personaje-card.seleccionado { border-color: var(--accent2); background: var(--card-hover); }
+.personaje-emoji { font-size: clamp(40px, 6vw, 72px); line-height: 1; }
+.personaje-nombre { color: var(--muted); font-size: 15px; font-weight: 600; }
+
+.avatar-hero { font-size: clamp(90px, 16vw, 180px); line-height: 1.1; animation: aparecer .5s ease; }
+.puntos-hero { color: var(--accent2); font-size: clamp(36px, 5vw, 64px); font-weight: 800; }
+
+@keyframes aparecer { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes celebrar {
+  0% { transform: scale(1); } 25% { transform: scale(1.15) rotate(-4deg); }
+  50% { transform: scale(1.1) rotate(4deg); } 75% { transform: scale(1.05); } 100% { transform: scale(1); }
+}
+.celebrando { animation: celebrar 1s ease infinite alternate; }
+
+.codigo-premio {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 18px;
+  font-family: 'Consolas', monospace;
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 800;
+  letter-spacing: 4px;
+  margin: 24px 0;
+  padding: 24px 40px;
+}
+
+.progreso-fila {
+  align-items: center;
+  background: var(--card);
+  border-radius: 14px;
+  display: flex;
+  gap: 14px;
+  padding: 14px 20px;
+  width: min(480px, 90vw);
+}
+.progreso-fila .emoji-mini { font-size: 30px; }
+.progreso-info { flex: 1; }
+.progreso-lugar { color: var(--muted); font-size: 15px; }
+.progreso-puntos { color: var(--accent2); font-weight: 800; }
+
+.toast {
+  background: var(--err);
+  border-radius: 12px;
+  bottom: 30px;
+  font-size: 17px;
+  font-weight: 600;
+  left: 50%;
+  padding: 16px 28px;
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 99;
+}
+
+.cargando { color: var(--muted); font-size: 20px; }
+
+.barra-superior {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  left: 0;
+  padding: 18px 28px;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+.barra-titulo { flex: 1; font-size: 22px; font-weight: 700; }
+.barra-paso { background: var(--card); border-radius: 999px; color: var(--accent2); font-size: 16px; font-weight: 700; padding: 8px 20px; }
+.estado-conexion { border-radius: 999px; font-size: 13px; padding: 6px 14px; }
+.estado-conexion.online { background: rgba(46,204,113,.15); color: var(--ok); }
+.estado-conexion.offline { background: rgba(231,76,60,.15); color: var(--err); }

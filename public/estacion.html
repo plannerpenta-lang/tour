@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tour · Estación</title>
+<link rel="stylesheet" href="/css/tour.css">
+</head>
+<body>
+
+<div class="barra-superior">
+  <div class="barra-titulo" id="titulo-estacion">Estación</div>
+  <div class="barra-paso" id="paso-estacion"></div>
+  <div class="estado-conexion online">En línea</div>
+</div>
+
+<div id="pantalla-personajes" class="screen activa">
+  <h1 id="bienvenida-titulo">¿Quién eres?</h1>
+  <p class="subtitulo">Toca tu personaje para continuar el recorrido</p>
+  <div class="grid-personajes" id="grid-personajes"></div>
+</div>
+
+<div id="pantalla-sesion" class="screen">
+  <div class="avatar-hero" id="sesion-avatar"></div>
+  <h1>¡Hola, <span id="sesion-usuario"></span>!</h1>
+  <p class="subtitulo">Has acumulado <b style="color:var(--accent2)" id="sesion-puntos">0</b> puntos ·
+     <span id="sesion-progreso"></span></p>
+  <button class="boton grande" id="boton-visita" onclick="registrarVisita()">✓ Registrar mi visita aquí (+100)</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+</div>
+
+<div id="pantalla-exito" class="screen">
+  <div class="avatar-hero celebrando">🎉</div>
+  <h1>¡Visita registrada!</h1>
+  <p class="subtitulo">Sigue a la siguiente estación del tour</p>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/app.js"></script>
+<script>
+const params = new URLSearchParams(location.search);
+const CODIGO = params.get('e') || 'e1';
+let estacion = null;
+let sesionActual = null;
+
+async function iniciar() {
+  try {
+    const lista = await api('GET', '/estaciones');
+    estacion = lista.find(e => e.codigo === CODIGO);
+    if (!estacion || estacion.tipo !== 'estacion') {
+      document.getElementById('titulo-estacion').textContent = 'Estación no encontrada';
+      return;
+    }
+    document.getElementById('titulo-estacion').textContent = '📍 ' + estacion.nombre;
+    document.getElementById('paso-estacion').textContent = `Paso ${estacion.orden} de ${lista.length - 2}`;
+    await cargarPersonajes();
+  } catch { toast('Error de conexión con el servidor'); }
+}
+
+async function cargarPersonajes() {
+  const grid = document.getElementById('grid-personajes');
+  try {
+    const enTour = await api('GET', '/personajes?estado=en_tour');
+    grid.innerHTML = '';
+    if (enTour.length === 0) {
+      grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Aún nadie está en el tour.<br>Sé el primero en registrarse 🎟️</p>';
+      return;
+    }
+    for (const p of enTour) {
+      const card = document.createElement('div');
+      card.className = 'personaje-card';
+      card.innerHTML = `<span class="personaje-emoji">${p.avatar}</span><span class="personaje-nombre">${p.nombre}</span>`;
+      card.onclick = () => identificar(p);
+      grid.appendChild(card);
+    }
+  } catch { grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Error de conexión…</p>'; }
+}
+
+async function identificar(p) {
+  try {
+    sesionActual = await api('POST', '/totem/login', { personaje_id: p.id });
+    document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
+    document.getElementById('sesion-usuario').textContent = sesionActual.usuario.split(' ')[0];
+    document.getElementById('sesion-puntos').textContent = sesionActual.puntos;
+    document.getElementById('sesion-progreso').textContent =
+      `${sesionActual.visitadas.length} de 4 estaciones completadas`;
+
+    const yaVisito = sesionActual.visitadas.some(v => v.codigo === CODIGO);
+    const boton = document.getElementById('boton-visita');
+    if (yaVisito) {
+      boton.textContent = 'Ya registramos tu visita aquí ✓';
+      boton.disabled = true;
+    } else {
+      boton.textContent = `✓ Registrar mi visita aquí (+${estacion.puntos})`;
+      boton.disabled = false;
+    }
+    mostrarPantalla('pantalla-sesion');
+  } catch (err) { toast(err.message); await cargarPersonajes(); }
+}
+
+async function registrarVisita() {
+  if (!sesionActual) return;
+  try {
+    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO });
+    mostrarPantalla('pantalla-exito');
+    setTimeout(() => location.reload(), 5000);
+  } catch (err) { toast(err.message); }
+}
+
+socket.on('actualizacion', (msg) => {
+  if (['sesion_iniciada', 'premio_entregado', 'sesion_expirada'].includes(msg.tipo)) {
+    if (document.getElementById('pantalla-personajes').classList.contains('activa')) cargarPersonajes();
+  }
+});
+
+iniciar();
+</script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 const express = require('express');
 const http = require('node:http');
+const path = require('node:path');
 const { Server } = require('socket.io');
 const { db, ahora } = require('./db');
 const routes = require('./routes');
@@ -11,6 +12,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '..', 'public')));
 app.use((req, res, next) => { req.app.set('io', io); next(); });
 app.use('/api', routes);
 app.get('/health', (req, res) => res.json({ ok: true }));

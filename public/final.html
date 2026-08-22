@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Tour · Final</title>
+<link rel="stylesheet" href="/css/tour.css">
+</head>
+<body>
+
+<div class="barra-superior">
+  <div class="barra-titulo">🏆 Entrega de Premio</div>
+  <div class="estado-conexion online">En línea</div>
+</div>
+
+<div id="pantalla-personajes" class="screen activa">
+  <h1>¡Última parada!</h1>
+  <p class="subtitulo">Toca tu personaje para recibir tu premio</p>
+  <div class="grid-personajes" id="grid-personajes"></div>
+</div>
+
+<div id="pantalla-resumen" class="screen">
+  <div class="avatar-hero" id="resumen-avatar"></div>
+  <h1>¡Felicidades, <span id="resumen-usuario"></span>!</h1>
+  <p class="subtitulo">Completaste el tour con <b style="color:var(--accent2)" id="resumen-puntos">0</b> puntos</p>
+  <button class="boton grande celebrando" onclick="reclamarPremio()">🎁 Recibir mi premio</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">Volver ←</button>
+</div>
+
+<div id="pantalla-premio" class="screen">
+  <div class="avatar-hero celebrando">🎊</div>
+  <h1>¡Tu premio!</h1>
+  <div class="codigo-premio" id="codigo-premio"></div>
+  <p class="subtitulo">Tu personaje queda liberado para el próximo aventurero.</p>
+  <div style="color:var(--muted); margin-top:20px; font-size:15px">Esta pantalla se reinicia automáticamente…</div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/app.js"></script>
+<script>
+let sesionActual = null;
+
+async function cargarPersonajes() {
+  const grid = document.getElementById('grid-personajes');
+  try {
+    const enTour = await api('GET', '/personajes?estado=en_tour');
+    grid.innerHTML = '';
+    if (enTour.length === 0) {
+      grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Nadie está en el tour ahora mismo.</p>';
+      return;
+    }
+    for (const p of enTour) {
+      const card = document.createElement('div');
+      card.className = 'personaje-card';
+      card.innerHTML = `<span class="personaje-emoji">${p.avatar}</span><span class="personaje-nombre">${p.nombre}</span>`;
+      card.onclick = () => identificar(p);
+      grid.appendChild(card);
+    }
+  } catch { grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Error de conexión…</p>'; }
+}
+
+async function identificar(p) {
+  try {
+    sesionActual = await api('POST', '/totem/login', { personaje_id: p.id });
+    document.getElementById('resumen-avatar').textContent = sesionActual.avatar;
+    document.getElementById('resumen-usuario').textContent = sesionActual.usuario.split(' ')[0];
+    document.getElementById('resumen-puntos').textContent = sesionActual.puntos;
+    mostrarPantalla('pantalla-resumen');
+  } catch (err) { toast(err.message); await cargarPersonajes(); }
+}
+
+async function reclamarPremio() {
+  if (!sesionActual) return;
+  try {
+    const r = await api('POST', '/finalizar', { sesion_id: sesionActual.sesion_id ?? sesionActual.id });
+    document.getElementById('codigo-premio').textContent = r.premio || 'PREMIO FÍSICO — llamar al staff';
+    mostrarPantalla('pantalla-premio');
+    setTimeout(() => location.reload(), 20000);
+  } catch (err) { toast(err.message); }
+}
+
+socket.on('actualizacion', (msg) => {
+  if (['sesion_iniciada', 'premio_entregado', 'sesion_expirada'].includes(msg.tipo)) {
+    if (document.getElementById('pantalla-personajes').classList.contains('activa')) cargarPersonajes();
+  }
+});
+
+cargarPersonajes();
+</script>
+</body>
+</html>
