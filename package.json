@@ -1,0 +1,16 @@
+{
+  "name": "tour",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tour gamificado multi-totem - backend",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "seed": "node src/seed.js",
+    "test": "node scripts/e2e.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "socket.io": "^4.8.0"
+  }
+}
