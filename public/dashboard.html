@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tour · Dashboard</title>
+<link rel="stylesheet" href="/css/tour.css">
+<style>
+  body { overflow: auto; }
+  .panel { padding: 80px 32px 32px; max-width: 1200px; margin: 0 auto; }
+  .tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .tarjeta-metrica { background: var(--card); border-radius: 16px; padding: 18px; }
+  .tarjeta-metrica .valor { font-size: 34px; font-weight: 800; color: var(--accent2); }
+  .tarjeta-metrica .etiqueta { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 16px; overflow: hidden; }
+  th { background: var(--bg2); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; padding: 12px 14px; text-align: left; }
+  td { border-top: 1px solid rgba(255,255,255,.06); font-size: 15px; padding: 12px 14px; }
+  .barra-progreso { background: var(--bg); border-radius: 999px; height: 8px; width: 130px; }
+  .barra-progreso > div { background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 999px; height: 100%; }
+  .fila-herramientas { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .boton.mini { font-size: 15px; padding: 10px 18px; }
+  h2.seccion { font-size: 18px; margin: 26px 0 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  .modal-fondo { align-items: center; background: rgba(0,0,0,.6); display: none; height: 100vh; justify-content: center; left: 0; position: fixed; top: 0; width: 100vw; z-index: 50; }
+  .modal-fondo.abierto { display: flex; }
+</style>
+</head>
+<body>
+
+<div class="barra-superior" style="background:rgba(15,18,38,.85)">
+  <div class="barra-titulo">📊 Dashboard del Tour</div>
+  <div class="estado-conexion online">En línea</div>
+  <button class="boton mini secundario" onclick="abrirAjustes()">⚙️ Ajustes</button>
+</div>
+
+<div id="pantalla-pin" class="screen activa">
+  <h1>🔒 Acceso staff</h1>
+  <p class="subtitulo">Ingresa el PIN para ver el dashboard</p>
+  <form class="tarjeta-forma" id="forma-pin">
+    <input type="password" id="campo-pin" placeholder="PIN" inputmode="numeric" maxlength="12" required style="text-align:center; font-size:24px; letter-spacing:8px">
+    <button type="submit" class="boton">Entrar</button>
+  </form>
+</div>
+
+<div id="pantalla-panel" class="screen activa panel" style="display:none; height:auto">
+  <div class="fila-herramientas">
+    <button class="boton mini secundario" onclick="cargarDashboard()">🔄 Actualizar</button>
+    <button class="boton mini secundario" onclick="exportarCsv()">📥 Exportar CSV</button>
+    <span style="color:var(--muted); font-size:13px">Se actualiza en vivo automáticamente</span>
+  </div>
+
+  <div class="tarjetas" id="tarjetas-totales"></div>
+
+  <h2 class="seccion">Recorridos en curso</h2>
+  <table id="tabla-activas">
+    <thead><tr><th>Usuario</th><th>Personaje</th><th>Puntos</th><th>Progreso</th><th>Iniciado hace</th><th>Últ. actividad</th></tr></thead>
+    <tbody></tbody>
+  </table>
+
+  <h2 class="seccion">Ritmo por estación</h2>
+  <table id="tabla-tiempos">
+    <thead><tr><th>Estación</th><th>Visitas registradas</th><th>Min. promedio desde inicio del tour</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="modal-fondo" id="modal-ajustes">
+  <form class="tarjeta-forma" onsubmit="guardarAjustes(event)">
+    <h1 style="font-size:22px">⚙️ Ajustes</h1>
+    <label style="color:var(--muted); font-size:14px">PIN de staff</label>
+    <input type="text" id="ajuste-pin" maxlength="12" inputmode="numeric">
+    <label style="color:var(--muted); font-size:14px">Timeout de sesión (minutos)</label>
+    <input type="number" id="ajuste-timeout" min="1" max="240">
+    <button type="submit" class="boton">Guardar</button>
+    <button type="button" class="boton secundario" onclick="document.getElementById('modal-ajustes').classList.remove('abierto')">Cerrar</button>
+  </form>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/app.js"></script>
+<script>
+let PIN = sessionStorage.getItem('tour_pin') || '';
+
+async function cargarDashboard() {
+  const r = await fetch('/api/dashboard', { headers: { 'x-staff-pin': PIN } });
+  if (r.status === 401) { sessionStorage.removeItem('tour_pin'); location.reload(); return; }
+  const data = await r.json();
+  pintar(data);
+}
+
+function pintar(data) {
+  const t = data.totales;
+  document.getElementById('tarjetas-totales').innerHTML = `
+    <div class="tarjeta-metrica"><div class="valor">${t.tours_completados_hoy}</div><div class="etiqueta">Tours completados hoy</div></div>
+    <div class="tarjeta-metrica"><div class="valor">${data.activas.length}</div><div class="etiqueta">En curso ahora</div></div>
+    <div class="tarjeta-metrica"><div class="valor">${t.tours_abandonados_hoy}</div><div class="etiqueta">Abandonados hoy</div></div>
+    <div class="tarjeta-metrica"><div class="valor">${t.premios_entregados}/${t.premios_disponibles + t.premios_entregados}</div><div class="etiqueta">Premios entregados</div></div>`;
+
+  const cuerpo = document.querySelector('#tabla-activas tbody');
+  if (data.activas.length === 0) {
+    cuerpo.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted)">Sin recorridos activos</td></tr>';
+  } else {
+    cuerpo.innerHTML = data.activas.map(a => {
+      const mins = Math.floor((Date.now() - new Date(a.iniciada_en).getTime()) / 60000);
+      const inactivo = Math.floor((Date.now() - new Date(a.ultima_actividad_en).getTime()) / 60000);
+      return `<tr>
+        <td>${a.usuario}</td>
+        <td>${a.avatar} ${a.personaje}</td>
+        <td><b style="color:var(--accent2)">${a.puntos}</b></td>
+        <td><div style="align-items:center;display:flex;gap:10px"><span style="font-size:13px">${a.estaciones_visitadas}/4</span><div class="barra-progreso"><div style="width:${a.estaciones_visitadas / 4 * 100}%"></div></div></div></td>
+        <td>${mins} min</td>
+        <td style="${inactivo >= 5 ? 'color:var(--warn)' : ''}">hace ${inactivo} min</td>
+      </tr>`;
+    }).join('');
+  }
+
+  document.querySelector('#tabla-tiempos tbody').innerHTML =
+    data.tiempos.map(x => `<tr><td>📍 ${x.estacion}</td><td>${x.visitas}</td><td>${x.minutos_desde_inicio || '—'}</td></tr>`).join('');
+}
+
+function exportarCsv() {
+  window.open(`/api/exportar.csv?pin=${encodeURIComponent(PIN)}`, '_blank');
+}
+
+async function abrirAjustes() {
+  const r = await fetch('/api/config', { headers: { 'x-staff-pin': PIN } });
+  const c = await r.json();
+  document.getElementById('ajuste-pin').value = c.staff_pin;
+  document.getElementById('ajuste-timeout').value = c.timeout_min;
+  document.getElementById('modal-ajustes').classList.add('abierto');
+}
+
+async function guardarAjustes(e) {
+  e.preventDefault();
+  try {
+    await api('PUT', '/config', {
+      staff_pin: document.getElementById('ajuste-pin').value,
+      timeout_min: Number(document.getElementById('ajuste-timeout').value)
+    }, PIN);
+    toastOk('Ajustes guardados');
+    document.getElementById('modal-ajustes').classList.remove('abierto');
+  } catch (err) { alert(err.message); }
+}
+
+function toastOk(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.style.background = 'var(--ok)';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+
+document.getElementById('forma-pin').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  PIN = document.getElementById('campo-pin').value;
+  const r = await fetch('/api/dashboard', { headers: { 'x-staff-pin': PIN } });
+  if (!r.ok) { alert('PIN incorrecto'); return; }
+  sessionStorage.setItem('tour_pin', PIN);
+  pintar(await r.json());
+  document.getElementById('pantalla-pin').classList.remove('activa');
+});
+
+socket.on('actualizacion', () => { if (PIN) cargarDashboard(); });
+
+if (PIN) { cargarDashboard(); document.getElementById('pantalla-pin').classList.remove('activa'); }
+</script>
+</body>
+</html>

@@ -2,10 +2,12 @@ require('../src/index');
 
 const BASE = 'http://localhost:3000/api';
 
-async function api(metodo, ruta, cuerpo) {
+async function api(metodo, ruta, cuerpo, pin) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (pin) headers['x-staff-pin'] = pin;
   const r = await fetch(BASE + ruta, {
     method: metodo,
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: cuerpo ? JSON.stringify(cuerpo) : undefined
   });
   const data = await r.json();
@@ -38,13 +40,18 @@ function check(nombre, cond, detalle) {
   check('Sesión creada', ses.status === 201 && (ses.data.id > 0 || ses.data.sesion_id > 0), ses);
   const sesionId = ses.data.sesion_id ?? ses.data.id;
 
-  const otroUser = await api('POST', '/usuarios', { nombre: 'Beto Ruiz', consentimiento: true });
+  const otroUser = await api('POST', '/usuarios', { nombre: 'Beto Ruiz', telefono: '3109876543', consentimiento: true });
   const robo = await api('POST', '/sesiones', { usuario_id: otroUser.data.id, personaje_id: zorro.id });
   check('Rechaza personaje ya tomado', robo.status === 409, robo);
 
   console.log('--- 4. Login en estación intermedia ---');
-  const login = await api('POST', '/totem/login', { personaje_id: zorro.id });
+  const login = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '4567' });
   check('Tótem identifica al usuario', login.status === 200 && login.data.usuario === 'Ana Pérez', login);
+  const sinDigitos = await api('POST', '/totem/login', { personaje_id: zorro.id });
+  check('Rechaza login sin dígitos', sinDigitos.status === 401, sinDigitos);
+
+  const trasVisitas0 = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '4567' });
+  check('Puntos iniciales = 0', trasVisitas0.data.puntos === 0, trasVisitas0.data);
 
   console.log('--- 5. Visitas a las 4 estaciones ---');
   for (const cod of ['e1', 'e2', 'e3', 'e4']) {
@@ -54,11 +61,15 @@ function check(nombre, cond, detalle) {
   const dup = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1' });
   check('Rechaza estación repetida', dup.status === 409, dup);
 
-  const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id });
+  const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '4567' });
   check('Puntos acumulados = 400', trasVisitas.data.puntos === 400, trasVisitas.data);
 
-  console.log('--- 6. Finalización y premio ---');
-  const fin = await api('POST', '/finalizar', { sesion_id: sesionId });
+  console.log('--- 6. Finalización y premio (protegida con PIN) ---');
+  const sinPin = await fetch(BASE + '/finalizar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sesion_id: sesionId }) });
+  check('Rechaza finalizar sin PIN', sinPin.status === 401, { status: sinPin.status });
+  const pinMalo = await api('POST', '/finalizar', { sesion_id: sesionId }, '9999');
+  check('Rechaza PIN incorrecto', pinMalo.status === 401, pinMalo);
+  const fin = await api('POST', '/finalizar', { sesion_id: sesionId }, '1234');
   check('Premio asignado', fin.status === 201 || fin.status === 200, fin);
   check('Premio tiene código', typeof fin.data.premio === 'string' && fin.data.premio.startsWith('TOUR-'), fin.data);
 
@@ -69,9 +80,32 @@ function check(nombre, cond, detalle) {
   const reuso = await api('POST', '/sesiones', { usuario_id: otroUser.data.id, personaje_id: zorro.id });
   check('Otro usuario puede tomarlo', reuso.status === 201, reuso);
 
-  console.log('--- 8. Dashboard ---');
-  const dash = await api('GET', '/dashboard');
+  console.log('--- 8. Anti-suplantación (últimos 4 dígitos) ---');
+  const digitosMalos = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '0000' });
+  check('Rechaza dígitos incorrectos', digitosMalos.status === 401, digitosMalos);
+  const digitosBuenos = await api('POST', '/totem/login', { personaje_id: zorro.id, digitos: '6543' });
+  check('Acepta dígitos correctos', digitosBuenos.status === 200, digitosBuenos);
+
+  console.log('--- 9. Liberación voluntaria ---');
+  const libera = await api('POST', '/sesiones/liberar', { sesion_id: reuso.data.id });
+  check('Sesión liberada', libera.status === 200 && libera.data.personaje_liberado, libera);
+  const trasLiberar = await api('GET', '/personajes?estado=disponible');
+  check('Personaje de vuelta al pool', trasLiberar.data.some(p => p.nombre === 'Zorro'), null);
+
+  console.log('--- 10. Dashboard protegido + export CSV + config ---');
+  const dashSinPin = await fetch(BASE + '/dashboard');
+  check('Dashboard rechaza sin PIN', dashSinPin.status === 401, { status: dashSinPin.status });
+  const dash = await api('GET', '/dashboard', undefined, '1234');
   check('Dashboard responde', dash.status === 200 && Array.isArray(dash.data.activas), dash);
+  check('Dashboard trae tiempos por estación', Array.isArray(dash.data.tiempos) && dash.data.tiempos.length === 4, dash.data.tiempos);
+  const csvSinPin = await fetch(BASE + '/exportar.csv');
+  check('Export rechaza sin PIN', csvSinPin.status === 401, { status: csvSinPin.status });
+  const csv = await fetch(BASE + '/exportar.csv?pin=1234');
+  check('Export CSV responde', csv.status === 200 && (await csv.text()).includes('Ana Pérez'), null);
+  const cfg = await api('PUT', '/config', { timeout_min: 20 }, '1234');
+  check('Config actualizable', cfg.status === 200, cfg);
+  const cfgVer = await api('GET', '/config', undefined, '1234');
+  check('Config persistida', cfgVer.data.timeout_min === 20, cfgVer);
 
   console.log(fallos === 0 ? '\n✅ TODOS LOS TESTS PASARON' : `\n❌ ${fallos} TESTS FALLARON`);
   process.exit(fallos === 0 ? 0 : 1);

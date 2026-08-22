@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('node:http');
 const path = require('node:path');
 const { Server } = require('socket.io');
-const { db, ahora } = require('./db');
+const { db, ahora, obtenerConfig } = require('./db');
 const routes = require('./routes');
 
 require('./seed');
@@ -18,10 +18,10 @@ app.use('/api', routes);
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 // ---- Timeout de sesiones ----
-const TIMEOUT_MIN = Number(process.env.SESSION_TIMEOUT_MIN || 15);
 
 function expirarSesiones() {
-  const limite = new Date(Date.now() - TIMEOUT_MIN * 60 * 1000).toISOString();
+  const timeoutMin = Number(obtenerConfig('timeout_min', '15'));
+  const limite = new Date(Date.now() - timeoutMin * 60 * 1000).toISOString();
   const vencidas = db.prepare(`
     SELECT s.id, s.personaje_id FROM sesiones s
     WHERE s.estado = 'activa' AND s.ultima_actividad_en < ?
@@ -50,5 +50,5 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Servidor del tour en http://localhost:${PORT}`);
-  console.log(`Timeout de sesión: ${TIMEOUT_MIN} min`);
+  console.log(`Timeout de sesión: ${obtenerConfig('timeout_min', '15')} min (configurable desde el dashboard)`);
 });

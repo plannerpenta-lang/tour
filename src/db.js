@@ -39,11 +39,16 @@ CREATE TABLE IF NOT EXISTS sesiones (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
   personaje_id INTEGER NOT NULL REFERENCES personajes(id),
-  estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa','completada','expirada')),
+  estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa','completada','expirada','abandonada')),
   iniciada_en TEXT NOT NULL,
   ultima_actividad_en TEXT NOT NULL,
   completada_en TEXT,
   premio TEXT
+);
+
+CREATE TABLE IF NOT EXISTS config (
+  clave TEXT PRIMARY KEY,
+  valor TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS visitas (
@@ -68,4 +73,17 @@ function ahora() {
   return new Date().toISOString();
 }
 
-module.exports = { db, ahora };
+function obtenerConfig(clave, defecto) {
+  const fila = db.prepare('SELECT valor FROM config WHERE clave = ?').get(clave);
+  return fila ? fila.valor : defecto;
+}
+
+function guardarConfig(clave, valor) {
+  db.prepare('INSERT INTO config (clave, valor) VALUES (?, ?) ON CONFLICT(clave) DO UPDATE SET valor = excluded.valor')
+    .run(clave, String(valor));
+}
+
+guardarConfig('staff_pin', obtenerConfig('staff_pin', process.env.STAFF_PIN || '1234'));
+guardarConfig('timeout_min', obtenerConfig('timeout_min', process.env.SESSION_TIMEOUT_MIN || '15'));
+
+module.exports = { db, ahora, obtenerConfig, guardarConfig };

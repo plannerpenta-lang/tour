@@ -23,8 +23,23 @@
   <div class="avatar-hero" id="resumen-avatar"></div>
   <h1>¡Felicidades, <span id="resumen-usuario"></span>!</h1>
   <p class="subtitulo">Completaste el tour con <b style="color:var(--accent2)" id="resumen-puntos">0</b> puntos</p>
-  <button class="boton grande celebrando" onclick="reclamarPremio()">🎁 Recibir mi premio</button>
+  <button class="boton grande celebrando" onclick="mostrarPantalla('pantalla-pin')">🎁 Recibir mi premio</button>
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">Volver ←</button>
+</div>
+
+<div id="pantalla-pin" class="screen">
+  <h1>🔒 Confirmación del staff</h1>
+  <p class="subtitulo">Un miembro del equipo debe ingresar el PIN<br>para entregar el premio</p>
+  <form class="tarjeta-forma" style="align-items:center" onsubmit="reclamarPremio(event)">
+    <input type="password" id="campo-pin-staff" inputmode="numeric" maxlength="12"
+      placeholder="PIN" required autocomplete="off"
+      style="text-align:center; font-size:24px; letter-spacing:8px; width:260px">
+    <button type="submit" class="boton">Entregar premio 🎁</button>
+    <button type="button" class="boton secundario" onclick="liberarSesion(sesionActual.sesion_id ?? sesionActual.id, '¿Liberar este personaje SIN entregar premio?')">
+      El usuario se retiró · liberar sin premio
+    </button>
+    <button type="button" class="boton secundario" onclick="mostrarPantalla('pantalla-resumen')">← Volver</button>
+  </form>
 </div>
 
 <div id="pantalla-premio" class="screen">
@@ -69,14 +84,19 @@ async function identificar(p) {
   } catch (err) { toast(err.message); await cargarPersonajes(); }
 }
 
-async function reclamarPremio() {
+async function reclamarPremio(e) {
+  e.preventDefault();
   if (!sesionActual) return;
+  const pin = document.getElementById('campo-pin-staff').value;
   try {
-    const r = await api('POST', '/finalizar', { sesion_id: sesionActual.sesion_id ?? sesionActual.id });
+    const r = await api('POST', '/finalizar', { sesion_id: sesionActual.sesion_id ?? sesionActual.id }, pin);
     document.getElementById('codigo-premio').textContent = r.premio || 'PREMIO FÍSICO — llamar al staff';
     mostrarPantalla('pantalla-premio');
     setTimeout(() => location.reload(), 20000);
-  } catch (err) { toast(err.message); }
+  } catch (err) {
+    toast(err.message);
+    document.getElementById('campo-pin-staff').value = '';
+  }
 }
 
 socket.on('actualizacion', (msg) => {

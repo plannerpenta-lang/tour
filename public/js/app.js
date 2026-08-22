@@ -1,11 +1,27 @@
 const API = '/api';
 
-async function api(metodo, ruta, cuerpo) {
-  const r = await fetch(API + ruta, {
+async function _fetchApi(metodo, ruta, cuerpo, pin) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (pin) headers['x-staff-pin'] = pin;
+  return fetch(API + ruta, {
     method: metodo,
-    headers: { 'Content-Type': 'application/json' },
-    body: cuerpo ? JSON.stringify(cuerpo) : undefined
+    headers,
+    body: cuerpo !== undefined ? JSON.stringify(cuerpo) : undefined
   });
+}
+
+async function api(metodo, ruta, cuerpo, pin) {
+  let r;
+  try {
+    r = await _fetchApi(metodo, ruta, cuerpo, pin);
+  } catch {
+    await new Promise(res => setTimeout(res, 800));
+    try {
+      r = await _fetchApi(metodo, ruta, cuerpo, pin);
+    } catch {
+      throw Object.assign(new Error('Sin conexión con el servidor'), { status: 0 });
+    }
+  }
   const data = await r.json().catch(() => ({}));
   if (!r.ok) throw Object.assign(new Error(data.error || 'Error de conexión'), { status: r.status });
   return data;
@@ -17,14 +33,23 @@ function mostrarPantalla(id) {
 }
 
 let toastTimer = null;
-function toast(mensaje) {
+function toast(mensaje, color) {
   document.querySelectorAll('.toast').forEach(t => t.remove());
   const t = document.createElement('div');
   t.className = 'toast';
+  if (color) t.style.background = color;
   t.textContent = mensaje;
   document.body.appendChild(t);
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => t.remove(), 4000);
+}
+
+async function liberarSesion(sesionId, mensaje) {
+  if (!confirm(mensaje || '¿Liberar este personaje para otros usuarios?')) return;
+  try {
+    await api('POST', '/sesiones/liberar', { sesion_id: sesionId });
+    location.reload();
+  } catch (err) { toast(err.message); }
 }
 
 const socket = io();
