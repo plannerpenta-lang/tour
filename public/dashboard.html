@@ -158,7 +158,7 @@ function pintar(data) {
     <div class="tarjeta-metrica"><div class="valor">${t.tours_completados_hoy}</div><div class="etiqueta">Tours completados hoy</div></div>
     <div class="tarjeta-metrica"><div class="valor">${data.activas.length}</div><div class="etiqueta">En curso ahora</div></div>
     <div class="tarjeta-metrica"><div class="valor">${t.tours_abandonados_hoy}</div><div class="etiqueta">Abandonados hoy</div></div>
-    <div class="tarjeta-metrica"><div class="valor">${t.premios_entregados}/${t.premios_disponibles + t.premios_entregados}</div><div class="etiqueta">Premios entregados</div></div>`;
+    <div class="tarjeta-metrica"><div class="valor">${t.premios_entregados}</div><div class="etiqueta">Premios entregados</div></div>`;
 
   const cuerpo = document.querySelector('#tabla-activas tbody');
   if (data.activas.length === 0) {
