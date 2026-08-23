@@ -107,6 +107,7 @@ function check(nombre, cond, detalle) {
   check('Crear estación desde panel', nuevaEst.status === 201 && nuevaEst.data.codigo, nuevaEst);
   const estacionesFinales = await api('GET', '/estaciones');
   check('Estación nueva aparece en el tour', estacionesFinales.data.some(e => e.nombre === 'Zona VIP'), null);
+  require('../src/db').db.prepare("DELETE FROM estaciones WHERE nombre = 'Zona VIP'").run();
   const csvSinPin = await fetch(BASE + '/exportar.csv');
   check('Export rechaza sin PIN', csvSinPin.status === 401, { status: csvSinPin.status });
   const csv = await fetch(BASE + '/exportar.csv?pin=1234');
