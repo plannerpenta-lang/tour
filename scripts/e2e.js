@@ -87,12 +87,20 @@ function check(nombre, cond, detalle) {
   const trasLiberar = await api('GET', '/personajes?estado=disponible');
   check('Personaje de vuelta al pool', trasLiberar.data.some(p => p.nombre === 'Zorro'), null);
 
-  console.log('--- 10. Dashboard protegido + export CSV + config ---');
+  console.log('--- 10. Dashboard protegido + historial + export CSV + config ---');
+  const ses3 = await api('POST', '/sesiones', { usuario_id: reg.data.id, personaje_id: zorro.id });
+  await api('POST', '/totem/login', { personaje_id: zorro.id, estacion_codigo: 'e1' });
   const dashSinPin = await fetch(BASE + '/dashboard');
   check('Dashboard rechaza sin PIN', dashSinPin.status === 401, { status: dashSinPin.status });
   const dash = await api('GET', '/dashboard', undefined, '1234');
   check('Dashboard responde', dash.status === 200 && Array.isArray(dash.data.activas), dash);
+  check('Muestra ubicación en tiempo real', dash.data.activas.some(a => a.ubicacion === 'e1'), dash.data.activas);
+  await api('POST', '/sesiones/liberar', { sesion_id: ses3.data.id });
   check('Dashboard trae tiempos por estación', Array.isArray(dash.data.tiempos) && dash.data.tiempos.length === 4, dash.data.tiempos);
+  const histSinPin = await fetch(BASE + '/historial');
+  check('Historial rechaza sin PIN', histSinPin.status === 401, { status: histSinPin.status });
+  const hist = await api('GET', '/historial', undefined, '1234');
+  check('Historial trae registros completos', hist.status === 200 && hist.data.length >= 2 && 'telefono' in hist.data[0] && 'visitas' in hist.data[0], null);
   const csvSinPin = await fetch(BASE + '/exportar.csv');
   check('Export rechaza sin PIN', csvSinPin.status === 401, { status: csvSinPin.status });
   const csv = await fetch(BASE + '/exportar.csv?pin=1234');

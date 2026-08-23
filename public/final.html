@@ -76,7 +76,7 @@ async function cargarPersonajes() {
 
 async function identificar(p) {
   try {
-    sesionActual = await api('POST', '/totem/login', { personaje_id: p.id });
+    sesionActual = await api('POST', '/totem/login', { personaje_id: p.id, estacion_codigo: 'final' });
     document.getElementById('resumen-avatar').textContent = sesionActual.avatar;
     document.getElementById('resumen-usuario').textContent = sesionActual.usuario.split(' ')[0];
     document.getElementById('resumen-puntos').textContent = sesionActual.puntos;

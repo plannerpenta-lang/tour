@@ -67,7 +67,7 @@ router.post('/sesiones', (req, res) => {
 
 // El totem identifica al usuario por su personaje
 router.post('/totem/login', (req, res) => {
-  const { personaje_id } = req.body || {};
+  const { personaje_id, estacion_codigo } = req.body || {};
   const fila = db.prepare(`
     SELECT s.id AS sesion_id, s.estado, u.nombre AS usuario, p.nombre AS personaje, p.avatar,
            COALESCE((SELECT SUM(puntos) FROM visitas WHERE sesion_id = s.id), 0) AS puntos
@@ -79,7 +79,13 @@ router.post('/totem/login', (req, res) => {
 
   if (!fila) return res.status(404).json({ error: 'Este personaje no tiene un recorrido activo' });
 
-  db.prepare('UPDATE sesiones SET ultima_actividad_en = ? WHERE id = ?').run(ahora(), fila.sesion_id);
+  const t = ahora();
+  if (estacion_codigo) {
+    db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(t, estacion_codigo, fila.sesion_id);
+  } else {
+    db.prepare('UPDATE sesiones SET ultima_actividad_en = ? WHERE id = ?').run(t, fila.sesion_id);
+    emitir(req.app.get('io'), 'actualizacion', { tipo: 'actividad', sesion_id: fila.sesion_id });
+  }
   fila.visitadas = db.prepare(`
     SELECT e.codigo, e.nombre, v.puntos, v.timestamp
     FROM visitas v JOIN estaciones e ON e.id = v.estacion_id
@@ -174,7 +180,7 @@ router.get('/estaciones', (req, res) => {
 router.get('/dashboard', requerirPin, (req, res) => {
   const activas = db.prepare(`
     SELECT s.id AS sesion_id, u.nombre AS usuario, p.avatar, p.nombre AS personaje,
-           s.iniciada_en, s.ultima_actividad_en,
+           s.ubicacion, s.iniciada_en, s.ultima_actividad_en,
            COALESCE((SELECT SUM(puntos) FROM visitas WHERE sesion_id = s.id), 0) AS puntos,
            (SELECT COUNT(*) FROM visitas WHERE sesion_id = s.id) AS estaciones_visitadas
     FROM sesiones s
@@ -210,6 +216,30 @@ router.get('/dashboard', requerirPin, (req, res) => {
   });
 
   res.json({ activas, totales, tiempos });
+});
+
+// ---- Historial completo (protegido con PIN) ----
+
+router.get('/historial', requerirPin, (req, res) => {
+  const filas = db.prepare(`
+    SELECT s.id AS sesion_id, u.nombre, u.telefono, u.email,
+           p.avatar, p.nombre AS personaje,
+           s.estado, s.ubicacion, s.iniciada_en, COALESCE(s.completada_en, '') AS completada_en,
+           COALESCE((SELECT SUM(puntos) FROM visitas WHERE sesion_id = s.id), 0) AS puntos,
+           COALESCE(s.premio, '') AS premio
+    FROM sesiones s
+    JOIN usuarios u ON u.id = s.usuario_id
+    JOIN personajes p ON p.id = s.personaje_id
+    ORDER BY s.iniciada_en DESC
+  `).all();
+
+  const visitasStmt = db.prepare(`
+    SELECT e.nombre AS estacion, e.codigo, v.puntos, v.timestamp
+    FROM visitas v JOIN estaciones e ON e.id = v.estacion_id
+    WHERE v.sesion_id = ? ORDER BY e.orden
+  `);
+  for (const f of filas) f.visitas = visitasStmt.all(f.sesion_id);
+  res.json(filas);
 });
 
 // ---- Exportar CSV (protegido con PIN) ----

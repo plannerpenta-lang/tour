@@ -7,27 +7,42 @@
 <link rel="stylesheet" href="/css/tour.css">
 <style>
   body { overflow: auto; }
-  .panel { padding: 80px 32px 32px; max-width: 1200px; margin: 0 auto; }
+  .panel { padding: 80px 32px 32px; max-width: 1280px; margin: 0 auto; }
+  .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+  .tab { background: var(--card); border-radius: 12px; color: var(--muted); cursor: pointer; font-size: 16px; font-weight: 700; padding: 12px 26px; transition: .2s; }
+  .tab.activa { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
   .tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
   .tarjeta-metrica { background: var(--card); border-radius: 16px; padding: 18px; }
   .tarjeta-metrica .valor { font-size: 34px; font-weight: 800; color: var(--accent2); }
   .tarjeta-metrica .etiqueta { color: var(--muted); font-size: 13px; margin-top: 2px; }
   table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 16px; overflow: hidden; }
   th { background: var(--bg2); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; padding: 12px 14px; text-align: left; }
-  td { border-top: 1px solid rgba(255,255,255,.06); font-size: 15px; padding: 12px 14px; }
-  .barra-progreso { background: var(--bg); border-radius: 999px; height: 8px; width: 130px; }
+  td { border-top: 1px solid rgba(255,255,255,.06); font-size: 15px; padding: 12px 14px; vertical-align: middle; }
+  tr.detalle td { background: var(--bg2); }
+  .barra-progreso { background: var(--bg); border-radius: 999px; height: 8px; width: 110px; }
   .barra-progreso > div { background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 999px; height: 100%; }
-  .fila-herramientas { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+  .badge-ubicacion { background: rgba(124,92,255,.25); border-radius: 999px; font-weight: 700; padding: 5px 14px; white-space: nowrap; }
+  .badge-estado { border-radius: 999px; font-size: 13px; font-weight: 700; padding: 4px 12px; }
+  .estado-activa { background: rgba(0,212,255,.15); color: var(--accent2); }
+  .estado-completada { background: rgba(46,204,113,.15); color: var(--ok); }
+  .estado-expirada, .estado-abandonada { background: rgba(243,156,18,.15); color: var(--warn); }
+  .fila-herramientas { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
   .boton.mini { font-size: 15px; padding: 10px 18px; }
-  h2.seccion { font-size: 18px; margin: 26px 0 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; }
+  h2.seccion { font-size: 18px; letter-spacing: 1.5px; margin: 26px 0 12px; text-transform: uppercase; color: var(--muted); }
   .modal-fondo { align-items: center; background: rgba(0,0,0,.6); display: none; height: 100vh; justify-content: center; left: 0; position: fixed; top: 0; width: 100vw; z-index: 50; }
   .modal-fondo.abierto { display: flex; }
+  .fila-historial { cursor: pointer; }
+  .fila-historial:hover { background: var(--card-hover); }
+  .detalle-visitas { color: var(--muted); font-size: 14px; line-height: 1.9; }
+  .detalle-visitas b { color: var(--text); }
+  .pulso { animation: pulso 2s infinite; color: var(--ok); font-size: 13px; }
+  @keyframes pulso { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 </style>
 </head>
 <body>
 
 <div class="barra-superior" style="background:rgba(15,18,38,.85)">
-  <div class="barra-titulo">📊 Dashboard del Tour</div>
+  <div class="barra-titulo">📊 Dashboard del Tour <span class="pulso">● EN VIVO</span></div>
   <div class="estado-conexion online">En línea</div>
   <button class="boton mini secundario" onclick="abrirAjustes()">⚙️ Ajustes</button>
 </div>
@@ -41,26 +56,44 @@
   </form>
 </div>
 
-<div id="pantalla-panel" class="screen activa panel" style="display:none; height:auto">
-  <div class="fila-herramientas">
-    <button class="boton mini secundario" onclick="cargarDashboard()">🔄 Actualizar</button>
-    <button class="boton mini secundario" onclick="exportarCsv()">📥 Exportar CSV</button>
-    <span style="color:var(--muted); font-size:13px">Se actualiza en vivo automáticamente</span>
+<div id="pantalla-panel" class="panel" style="display:none">
+  <div class="tabs">
+    <button class="tab activa" id="tab-vivo" onclick="cambiarTab('vivo')">🛰️ En vivo</button>
+    <button class="tab" id="tab-historial" onclick="cambiarTab('historial')">🗂️ Historial completo</button>
   </div>
 
-  <div class="tarjetas" id="tarjetas-totales"></div>
+  <div id="vista-vivo">
+    <div class="tarjetas" id="tarjetas-totales"></div>
 
-  <h2 class="seccion">Recorridos en curso</h2>
-  <table id="tabla-activas">
-    <thead><tr><th>Usuario</th><th>Personaje</th><th>Puntos</th><th>Progreso</th><th>Iniciado hace</th><th>Últ. actividad</th></tr></thead>
-    <tbody></tbody>
-  </table>
+    <h2 class="seccion">Recorridos en curso — dónde está cada personaje ahora</h2>
+    <table id="tabla-activas">
+      <thead><tr><th>Personaje</th><th>Usuario</th><th>Está en</th><th>Puntos</th><th>Progreso</th><th>Iniciado hace</th><th>Sin actividad</th></tr></thead>
+      <tbody></tbody>
+    </table>
 
-  <h2 class="seccion">Ritmo por estación</h2>
-  <table id="tabla-tiempos">
-    <thead><tr><th>Estación</th><th>Visitas registradas</th><th>Min. promedio desde inicio del tour</th></tr></thead>
-    <tbody></tbody>
-  </table>
+    <h2 class="seccion">Ritmo por estación</h2>
+    <table id="tabla-tiempos">
+      <thead><tr><th>Estación</th><th>Visitas registradas</th><th>Min. promedio desde inicio del tour</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div id="vista-historial" style="display:none">
+    <div class="fila-herramientas">
+      <select id="filtro-estado" onchange="pintarHistorial()" style="background:var(--card);border:none;border-radius:10px;color:var(--text);font-size:15px;padding:10px 14px">
+        <option value="">Todos los estados</option>
+        <option value="activa">Activos</option>
+        <option value="completada">Completados</option>
+        <option value="expirada">Expirados</option>
+        <option value="abandonada">Abandonados</option>
+      </select>
+      <span style="color:var(--muted);font-size:14px" id="contador-historial"></span>
+    </div>
+    <table id="tabla-historial">
+      <thead><tr><th></th><th>Usuario</th><th>Contacto</th><th>Personaje</th><th>Estado</th><th>Puntos</th><th>Estaciones hechas</th><th>Inicio</th><th>Fin</th><th>Premio</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 </div>
 
 <div class="modal-fondo" id="modal-ajustes">
@@ -79,12 +112,34 @@
 <script src="/js/app.js"></script>
 <script>
 let PIN = sessionStorage.getItem('tour_pin') || '';
+let historialData = [];
+
+const NOMBRES_UBICACION = {};
+
+async function cargarNombresEstaciones() {
+  try {
+    const lista = await api('GET', '/estaciones');
+    for (const e of lista) NOMBRES_UBICACION[e.codigo] = e.nombre;
+  } catch {}
+}
+
+function nombreUbicacion(codigo) {
+  if (!codigo) return 'Sin iniciar';
+  return NOMBRES_UBICACION[codigo] || codigo;
+}
+
+function cambiarTab(tab) {
+  document.getElementById('vista-vivo').style.display = tab === 'vivo' ? 'block' : 'none';
+  document.getElementById('vista-historial').style.display = tab === 'historial' ? 'block' : 'none';
+  document.getElementById('tab-vivo').classList.toggle('activa', tab === 'vivo');
+  document.getElementById('tab-historial').classList.toggle('activa', tab === 'historial');
+  if (tab === 'historial') cargarHistorial();
+}
 
 async function cargarDashboard() {
   const r = await fetch('/api/dashboard', { headers: { 'x-staff-pin': PIN } });
   if (r.status === 401) { sessionStorage.removeItem('tour_pin'); location.reload(); return; }
-  const data = await r.json();
-  pintar(data);
+  pintar(await r.json());
 }
 
 function pintar(data) {
@@ -97,14 +152,15 @@ function pintar(data) {
 
   const cuerpo = document.querySelector('#tabla-activas tbody');
   if (data.activas.length === 0) {
-    cuerpo.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted)">Sin recorridos activos</td></tr>';
+    cuerpo.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted)">Sin recorridos activos en este momento</td></tr>';
   } else {
     cuerpo.innerHTML = data.activas.map(a => {
       const mins = Math.floor((Date.now() - new Date(a.iniciada_en).getTime()) / 60000);
       const inactivo = Math.floor((Date.now() - new Date(a.ultima_actividad_en).getTime()) / 60000);
       return `<tr>
+        <td>${a.avatar} <b>${a.personaje}</b></td>
         <td>${a.usuario}</td>
-        <td>${a.avatar} ${a.personaje}</td>
+        <td><span class="badge-ubicacion">📍 ${nombreUbicacion(a.ubicacion)}</span></td>
         <td><b style="color:var(--accent2)">${a.puntos}</b></td>
         <td><div style="align-items:center;display:flex;gap:10px"><span style="font-size:13px">${a.estaciones_visitadas}/4</span><div class="barra-progreso"><div style="width:${a.estaciones_visitadas / 4 * 100}%"></div></div></div></td>
         <td>${mins} min</td>
@@ -117,8 +173,52 @@ function pintar(data) {
     data.tiempos.map(x => `<tr><td>📍 ${x.estacion}</td><td>${x.visitas}</td><td>${x.minutos_desde_inicio || '—'}</td></tr>`).join('');
 }
 
-function exportarCsv() {
-  window.open(`/api/exportar.csv?pin=${encodeURIComponent(PIN)}`, '_blank');
+async function cargarHistorial() {
+  const r = await fetch('/api/historial', { headers: { 'x-staff-pin': PIN } });
+  if (r.status === 401) { sessionStorage.removeItem('tour_pin'); location.reload(); return; }
+  historialData = await r.json();
+  pintarHistorial();
+}
+
+function pintarHistorial() {
+  const filtro = document.getElementById('filtro-estado').value;
+  const lista = filtro ? historialData.filter(h => h.estado === filtro) : historialData;
+  document.getElementById('contador-historial').textContent = `${lista.length} registro(s)`;
+
+  const cuerpo = document.querySelector('#tabla-historial tbody');
+  if (lista.length === 0) {
+    cuerpo.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted)">Sin registros todavía</td></tr>';
+    return;
+  }
+  cuerpo.innerHTML = lista.map(h => {
+    const detalle = `
+      <tr class="detalle" id="detalle-${h.sesion_id}" style="display:none"><td colspan="10">
+        <div class="detalle-visitas">
+          📋 <b>Recorrido de ${h.nombre} (${h.avatar} ${h.personaje}):</b><br>
+          ${h.visitas.length === 0 ? 'Sin estaciones registradas' :
+            h.visitas.map(v => `&nbsp;&nbsp;✓ <b>${v.estacion}</b> — ${v.puntos} pts — ${new Date(v.timestamp).toLocaleString('es-CO')}`).join('<br>')}
+          ${h.premio ? `<br>🎁 Premio entregado: <b>${h.premio}</b>` : ''}
+        </div>
+      </td></tr>`;
+    const fecha = iso => iso ? new Date(iso).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '—';
+    return `<tr class="fila-historial" onclick="toggleDetalle(${h.sesion_id})">
+        <td>▸</td>
+        <td><b>${h.nombre}</b></td>
+        <td>${[h.telefono, h.email].filter(Boolean).join(' · ') || '—'}</td>
+        <td>${h.avatar} ${h.personaje}</td>
+        <td><span class="badge-estado estado-${h.estado}">${h.estado}</span></td>
+        <td><b style="color:var(--accent2)">${h.puntos}</b></td>
+        <td>${h.visitas.length}/4</td>
+        <td>${fecha(h.iniciada_en)}</td>
+        <td>${fecha(h.completada_en)}</td>
+        <td>${h.premio || '—'}</td>
+      </tr>${detalle}`;
+  }).join('');
+}
+
+function toggleDetalle(id) {
+  const fila = document.getElementById('detalle-' + id);
+  fila.style.display = fila.style.display === 'none' ? 'table-row' : 'none';
 }
 
 async function abrirAjustes() {
@@ -156,13 +256,27 @@ document.getElementById('forma-pin').addEventListener('submit', async (e) => {
   const r = await fetch('/api/dashboard', { headers: { 'x-staff-pin': PIN } });
   if (!r.ok) { alert('PIN incorrecto'); return; }
   sessionStorage.setItem('tour_pin', PIN);
+  await cargarNombresEstaciones();
   pintar(await r.json());
-  document.getElementById('pantalla-pin').classList.remove('activa');
+  document.getElementById('pantalla-pin').style.display = 'none';
+  document.getElementById('pantalla-panel').style.display = 'block';
 });
 
-socket.on('actualizacion', () => { if (PIN) cargarDashboard(); });
+socket.on('actualizacion', () => {
+  if (!PIN) return;
+  cargarDashboard();
+  if (document.getElementById('vista-historial').style.display !== 'none') cargarHistorial();
+});
+setInterval(() => { if (PIN) { cargarDashboard(); if (document.getElementById('vista-historial').style.display !== 'none') cargarHistorial(); } }, 15000);
 
-if (PIN) { cargarDashboard(); document.getElementById('pantalla-pin').classList.remove('activa'); }
+if (PIN) {
+  (async () => {
+    await cargarNombresEstaciones();
+    await cargarDashboard();
+    document.getElementById('pantalla-pin').style.display = 'none';
+    document.getElementById('pantalla-panel').style.display = 'block';
+  })();
+}
 </script>
 </body>
 </html>

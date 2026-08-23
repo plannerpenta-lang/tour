@@ -40,6 +40,7 @@ CREATE TABLE IF NOT EXISTS sesiones (
   usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
   personaje_id INTEGER NOT NULL REFERENCES personajes(id),
   estado TEXT NOT NULL DEFAULT 'activa' CHECK (estado IN ('activa','completada','expirada','abandonada')),
+  ubicacion TEXT,
   iniciada_en TEXT NOT NULL,
   ultima_actividad_en TEXT NOT NULL,
   completada_en TEXT,
@@ -68,6 +69,8 @@ CREATE TABLE IF NOT EXISTS premios (
   sesion_id INTEGER REFERENCES sesiones(id)
 );
 `);
+
+try { db.exec("ALTER TABLE sesiones ADD COLUMN ubicacion TEXT"); } catch (_) {}
 
 function ahora() {
   return new Date().toISOString();
