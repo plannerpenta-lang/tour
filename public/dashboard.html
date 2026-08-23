@@ -103,6 +103,14 @@
     <input type="text" id="ajuste-pin" maxlength="12" inputmode="numeric">
     <label style="color:var(--muted); font-size:14px">Timeout de sesión (minutos)</label>
     <input type="number" id="ajuste-timeout" min="1" max="240">
+    <div style="border-top:1px solid rgba(255,255,255,.1); margin:6px 0; padding-top:14px">
+      <label style="color:var(--muted); font-size:14px">Estaciones del tour</label>
+      <div id="lista-estaciones" style="font-size:15px; line-height:2"></div>
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <input type="text" id="nueva-estacion" placeholder="Nombre de nueva estación" maxlength="40" style="flex:1">
+        <button type="button" class="boton secundario" style="padding:12px 18px; font-size:15px" onclick="agregarEstacion()">+ Agregar</button>
+      </div>
+    </div>
     <button type="submit" class="boton">Guardar</button>
     <button type="button" class="boton secundario" onclick="document.getElementById('modal-ajustes').classList.remove('abierto')">Cerrar</button>
   </form>
@@ -113,6 +121,7 @@
 <script>
 let PIN = sessionStorage.getItem('tour_pin') || '';
 let historialData = [];
+let TOTAL_EST = 6;
 
 const NOMBRES_UBICACION = {};
 
@@ -143,6 +152,7 @@ async function cargarDashboard() {
 }
 
 function pintar(data) {
+  TOTAL_EST = data.total_estaciones || TOTAL_EST;
   const t = data.totales;
   document.getElementById('tarjetas-totales').innerHTML = `
     <div class="tarjeta-metrica"><div class="valor">${t.tours_completados_hoy}</div><div class="etiqueta">Tours completados hoy</div></div>
@@ -162,7 +172,7 @@ function pintar(data) {
         <td>${a.usuario}</td>
         <td><span class="badge-ubicacion">📍 ${nombreUbicacion(a.ubicacion)}</span></td>
         <td><b style="color:var(--accent2)">${a.puntos}</b></td>
-        <td><div style="align-items:center;display:flex;gap:10px"><span style="font-size:13px">${a.estaciones_visitadas}/4</span><div class="barra-progreso"><div style="width:${a.estaciones_visitadas / 4 * 100}%"></div></div></div></td>
+        <td><div style="align-items:center;display:flex;gap:10px"><span style="font-size:13px">${a.estaciones_visitadas}/${TOTAL_EST}</span><div class="barra-progreso"><div style="width:${a.estaciones_visitadas / TOTAL_EST * 100}%"></div></div></div></td>
         <td>${mins} min</td>
         <td style="${inactivo >= 5 ? 'color:var(--warn)' : ''}">hace ${inactivo} min</td>
       </tr>`;
@@ -176,7 +186,9 @@ function pintar(data) {
 async function cargarHistorial() {
   const r = await fetch('/api/historial', { headers: { 'x-staff-pin': PIN } });
   if (r.status === 401) { sessionStorage.removeItem('tour_pin'); location.reload(); return; }
-  historialData = await r.json();
+  const data = await r.json();
+  TOTAL_EST = data.total_estaciones || TOTAL_EST;
+  historialData = data.sesiones;
   pintarHistorial();
 }
 
@@ -208,7 +220,7 @@ function pintarHistorial() {
         <td>${h.avatar} ${h.personaje}</td>
         <td><span class="badge-estado estado-${h.estado}">${h.estado}</span></td>
         <td><b style="color:var(--accent2)">${h.puntos}</b></td>
-        <td>${h.visitas.length}/4</td>
+        <td>${h.visitas.length}/${TOTAL_EST}</td>
         <td>${fecha(h.iniciada_en)}</td>
         <td>${fecha(h.completada_en)}</td>
         <td>${h.premio || '—'}</td>
@@ -226,7 +238,21 @@ async function abrirAjustes() {
   const c = await r.json();
   document.getElementById('ajuste-pin').value = c.staff_pin;
   document.getElementById('ajuste-timeout').value = c.timeout_min;
+  const lista = await api('GET', '/estaciones');
+  document.getElementById('lista-estaciones').innerHTML =
+    lista.map(e => `&nbsp;&nbsp;${e.tipo === 'registro' ? '🎟️' : e.tipo === 'final' ? '🏆' : '📍'} ${e.nombre}`).join('<br>');
   document.getElementById('modal-ajustes').classList.add('abierto');
+}
+
+async function agregarEstacion() {
+  const nombre = document.getElementById('nueva-estacion').value.trim();
+  if (!nombre) return;
+  try {
+    await api('POST', '/estaciones', { nombre }, PIN);
+    toastOk('Estación agregada');
+    abrirAjustes();
+    cargarDashboard();
+  } catch (err) { alert(err.message); }
 }
 
 async function guardarAjustes(e) {

@@ -45,10 +45,12 @@ const params = new URLSearchParams(location.search);
 const CODIGO = params.get('e') || 'e1';
 let estacion = null;
 let sesionActual = null;
+let totalEstaciones = 6;
 
 async function iniciar() {
   try {
     const lista = await api('GET', '/estaciones');
+    totalEstaciones = lista.filter(x => x.tipo === 'estacion').length || 6;
     estacion = lista.find(e => e.codigo === CODIGO);
     if (!estacion || estacion.tipo !== 'estacion') {
       document.getElementById('titulo-estacion').textContent = 'Estación no encontrada';
@@ -86,7 +88,7 @@ async function identificar(p) {
     document.getElementById('sesion-usuario').textContent = sesionActual.usuario.split(' ')[0];
     document.getElementById('sesion-puntos').textContent = sesionActual.puntos;
     document.getElementById('sesion-progreso').textContent =
-      `${sesionActual.visitadas.length} de 4 estaciones completadas`;
+      `${sesionActual.visitadas.length} de ${totalEstaciones} estaciones completadas`;
 
     const yaVisito = sesionActual.visitadas.some(v => v.codigo === CODIGO);
     const boton = document.getElementById('boton-visita');
