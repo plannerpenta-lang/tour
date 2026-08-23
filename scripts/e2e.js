@@ -44,13 +44,21 @@ function check(nombre, cond, detalle) {
   const robo = await api('POST', '/sesiones', { usuario_id: otroUser.data.id, personaje_id: zorro.id });
   check('Rechaza personaje ya tomado', robo.status === 409, robo);
 
-  console.log('--- 4. Login en estación intermedia ---');
-  const login = await api('POST', '/totem/login', { personaje_id: zorro.id });
+  console.log('--- 4. Linealidad del recorrido ---');
+  const enRegistro = await api('GET', '/personajes?estado=en_tour&ubicacion=registro');
+  check('Recién registrado aparece en Estación 1', enRegistro.data.some(p => p.nombre === 'Zorro'), null);
+  const enE1antes = await api('GET', '/personajes?estado=en_tour&ubicacion=e2');
+  check('NO aparece todavía en Estación 3', !enE1antes.data.some(p => p.nombre === 'Zorro'), null);
+
+  const login = await api('POST', '/totem/login', { personaje_id: zorro.id, estacion_codigo: 'e1' });
   check('Tótem identifica al usuario', login.status === 200 && login.data.usuario === 'Ana Pérez', login);
   check('No expone el teléfono', login.data.telefono === undefined, login.data);
-
-  const trasVisitas0 = await api('POST', '/totem/login', { personaje_id: zorro.id });
+  const trasVisitas0 = await api('POST', '/totem/login', { personaje_id: zorro.id, estacion_codigo: 'e1' });
   check('Puntos iniciales = 0', trasVisitas0.data.puntos === 0, trasVisitas0.data);
+  const enRegistroTrasE1 = await api('GET', '/personajes?estado=en_tour&ubicacion=registro');
+  check('Ya no aparece en Estación 1 (avanzó)', !enRegistroTrasE1.data.some(p => p.nombre === 'Zorro'), null);
+  const enE2trasE1 = await api('GET', '/personajes?estado=en_tour&ubicacion=e1');
+  check('Ahora aparece en Estación 2', enE2trasE1.data.some(p => p.nombre === 'Zorro'), null);
 
   console.log('--- 5. Visitas a las 4 estaciones ---');
   for (const cod of ['e1', 'e2', 'e3', 'e4']) {
@@ -60,7 +68,7 @@ function check(nombre, cond, detalle) {
   const dup = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1' });
   check('Rechaza estación repetida', dup.status === 409, dup);
 
-  const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id });
+  const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id, estacion_codigo: 'e4' });
   check('Puntos acumulados = 400', trasVisitas.data.puntos === 400, trasVisitas.data);
 
   console.log('--- 6. Finalización y premio (protegida con PIN) ---');

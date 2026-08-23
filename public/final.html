@@ -54,14 +54,20 @@
 <script src="/js/app.js"></script>
 <script>
 let sesionActual = null;
+let codigoUltimaEstacion = null;
 
 async function cargarPersonajes() {
   const grid = document.getElementById('grid-personajes');
   try {
-    const enTour = await api('GET', '/personajes?estado=en_tour');
+    if (!codigoUltimaEstacion) {
+      const lista = await api('GET', '/estaciones');
+      const ests = lista.filter(e => e.tipo === 'estacion');
+      codigoUltimaEstacion = ests.length ? ests[ests.length - 1].codigo : 'e6';
+    }
+    const enTour = await api('GET', `/personajes?estado=en_tour&ubicacion=${codigoUltimaEstacion}`);
     grid.innerHTML = '';
     if (enTour.length === 0) {
-      grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Nadie está en el tour ahora mismo.</p>';
+      grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Nadie ha completado<br>la última estación todavía.</p>';
       return;
     }
     for (const p of enTour) {

@@ -19,7 +19,16 @@ function requerirPin(req, res, next) {
 // ---- Personajes ----
 
 router.get('/personajes', (req, res) => {
-  const { estado } = req.query;
+  const { estado, ubicacion } = req.query;
+  if (estado === 'en_tour' && ubicacion) {
+    const filas = db.prepare(`
+      SELECT p.* FROM personajes p
+      JOIN sesiones s ON s.personaje_id = p.id AND s.estado = 'activa'
+      WHERE p.estado = 'en_tour' AND s.ubicacion = ?
+      ORDER BY p.id
+    `).all(ubicacion);
+    return res.json(filas);
+  }
   const filas = estado
     ? db.prepare('SELECT * FROM personajes WHERE estado = ? ORDER BY id').all(estado)
     : db.prepare('SELECT * FROM personajes ORDER BY id').all();
@@ -52,8 +61,8 @@ router.post('/sesiones', (req, res) => {
 
     db.prepare("UPDATE personajes SET estado = 'en_tour' WHERE id = ?").run(personaje_id);
     const t = ahora();
-    const r = db.prepare(`INSERT INTO sesiones (usuario_id, personaje_id, estado, iniciada_en, ultima_actividad_en)
-      VALUES (?, ?, 'activa', ?, ?)`).run(usuario_id, personaje_id, t, t);
+    const r = db.prepare(`INSERT INTO sesiones (usuario_id, personaje_id, estado, ubicacion, iniciada_en, ultima_actividad_en)
+      VALUES (?, ?, 'activa', 'registro', ?, ?)`).run(usuario_id, personaje_id, t, t);
 
     db.exec('COMMIT');
     const sesion = { id: Number(r.lastInsertRowid), usuario_id, personaje_id };

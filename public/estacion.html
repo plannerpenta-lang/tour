@@ -46,16 +46,20 @@ const CODIGO = params.get('e') || 'e1';
 let estacion = null;
 let sesionActual = null;
 let totalEstaciones = 6;
+let codigoAnterior = 'registro';
 
 async function iniciar() {
   try {
     const lista = await api('GET', '/estaciones');
     totalEstaciones = lista.filter(x => x.tipo === 'estacion').length || 6;
+    for (const e of lista) NOMBRES_EST[e.codigo] = e.nombre;
     estacion = lista.find(e => e.codigo === CODIGO);
     if (!estacion || estacion.tipo !== 'estacion') {
       document.getElementById('titulo-estacion').textContent = 'Estación no encontrada';
       return;
     }
+    const anterior = lista.find(e => e.orden === estacion.orden - 1);
+    codigoAnterior = anterior ? anterior.codigo : null;
     document.getElementById('titulo-estacion').textContent = '📍 ' + estacion.nombre;
     document.getElementById('paso-estacion').textContent = `Paso ${estacion.orden} de ${lista.length - 2}`;
     await cargarPersonajes();
@@ -65,10 +69,10 @@ async function iniciar() {
 async function cargarPersonajes() {
   const grid = document.getElementById('grid-personajes');
   try {
-    const enTour = await api('GET', '/personajes?estado=en_tour');
+    const enTour = await api('GET', `/personajes?estado=en_tour&ubicacion=${codigoAnterior}`);
     grid.innerHTML = '';
     if (enTour.length === 0) {
-      grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Aún nadie está en el tour.<br>Sé el primero en registrarse 🎟️</p>';
+      grid.innerHTML = `<p class="cargando" style="grid-column:1/-1;text-align:center">Nadie ha llegado desde<br><b>${anteriorNombre()}</b> todavía</p>`;
       return;
     }
     for (const p of enTour) {
@@ -112,8 +116,13 @@ async function registrarVisita() {
   } catch (err) { toast(err.message); }
 }
 
+function anteriorNombre() {
+  return codigoAnterior === 'registro' ? 'el Registro' : (NOMBRES_EST[codigoAnterior] || 'la estación anterior');
+}
+const NOMBRES_EST = {};
+
 socket.on('actualizacion', (msg) => {
-  if (['sesion_iniciada', 'premio_entregado', 'sesion_expirada'].includes(msg.tipo)) {
+  if (['sesion_iniciada', 'premio_entregado', 'sesion_expirada', 'sesion_liberada'].includes(msg.tipo)) {
     if (document.getElementById('pantalla-personajes').classList.contains('activa')) cargarPersonajes();
   }
 });
