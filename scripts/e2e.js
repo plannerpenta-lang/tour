@@ -103,11 +103,12 @@ function check(nombre, cond, detalle) {
   const hist = await api('GET', '/historial', undefined, '1234');
   check('Historial trae registros completos', hist.status === 200 && hist.data.sesiones.length >= 2 && 'telefono' in hist.data.sesiones[0] && 'visitas' in hist.data.sesiones[0], null);
   check('Historial trae total de estaciones', hist.data.total_estaciones === 6, hist.data.total_estaciones);
-  const nuevaEst = await api('POST', '/estaciones', { nombre: 'Zona VIP' }, '1234');
-  check('Crear estación desde panel', nuevaEst.status === 201 && nuevaEst.data.codigo, nuevaEst);
-  const estacionesFinales = await api('GET', '/estaciones');
-  check('Estación nueva aparece en el tour', estacionesFinales.data.some(e => e.nombre === 'Zona VIP'), null);
-  require('../src/db').db.prepare("DELETE FROM estaciones WHERE nombre = 'Zona VIP'").run();
+  const estacionProhibida = await fetch(BASE + '/estaciones', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-staff-pin': '1234' },
+    body: JSON.stringify({ nombre: 'Hack' })
+  });
+  check('No se pueden crear estaciones vía API', estacionProhibida.status === 404, { status: estacionProhibida.status });
   const csvSinPin = await fetch(BASE + '/exportar.csv');
   check('Export rechaza sin PIN', csvSinPin.status === 401, { status: csvSinPin.status });
   const csv = await fetch(BASE + '/exportar.csv?pin=1234');

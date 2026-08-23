@@ -175,18 +175,6 @@ router.get('/estaciones', (req, res) => {
   res.json(db.prepare('SELECT * FROM estaciones ORDER BY orden').all());
 });
 
-router.post('/estaciones', requerirPin, (req, res) => {
-  const { nombre } = req.body || {};
-  if (!nombre || !nombre.trim()) return res.status(400).json({ error: 'El nombre es obligatorio' });
-  const ultima = db.prepare("SELECT MAX(orden) AS o FROM estaciones WHERE tipo = 'estacion'").get();
-  const orden = (ultima.o || 0) + 1;
-  const codigo = `e${Date.now().toString(36)}`;
-  db.prepare('INSERT INTO estaciones (codigo, nombre, orden, tipo, puntos) VALUES (?, ?, ?, ?, ?)')
-    .run(codigo, nombre.trim(), orden, 'estacion', 100);
-  emitir(req.app.get('io'), 'actualizacion', { tipo: 'config_actualizada' });
-  res.status(201).json({ codigo, nombre: nombre.trim(), orden });
-});
-
 // ---- Dashboard (protegido con PIN) ----
 
 router.get('/dashboard', requerirPin, (req, res) => {
