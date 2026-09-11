@@ -144,15 +144,11 @@ async function cargarMenu() {
     grid.innerHTML = '';
     for (const plato of platos) {
       const card = document.createElement('div');
-      const agotado = plato.stock <= 0;
-      card.className = 'personaje-card' + (agotado ? ' agotado' : '');
-      card.style.opacity = agotado ? '.4' : '1';
-      card.style.pointerEvents = agotado ? 'none' : 'auto';
+      card.className = 'personaje-card';
       card.innerHTML = `<span style="font-size:42px">${plato.emoji}</span>
         <span style="font-weight:800; font-size:16px">${plato.nombre}</span>
-        <span style="color:var(--muted); font-size:13px">${plato.descripcion}</span>
-        <span style="color:${agotado ? 'var(--err)' : 'var(--muted)'}; font-size:14px; font-weight:700">${agotado ? 'AGOTADO' : 'Quedan ' + plato.stock + ' disponibles'}</span>`;
-      if (!agotado) card.onclick = () => elegirPlato(plato);
+        <span style="color:var(--muted); font-size:13px">${plato.descripcion}</span>`;
+      card.onclick = () => elegirPlato(plato);
       grid.appendChild(card);
     }
   } catch { grid.innerHTML = '<p class="cargando">Error cargando menú</p>'; }
@@ -163,7 +159,7 @@ function elegirPlato(plato) {
   document.getElementById('confirmar-emoji').textContent = plato.emoji;
   document.getElementById('confirmar-plato').textContent = plato.nombre;
   document.getElementById('confirmar-desc').textContent = plato.descripcion;
-  document.getElementById('confirmar-puntos').textContent = `Quedan ${plato.stock} disponibles`;
+  document.getElementById('confirmar-puntos').textContent = '';
   mostrarPantalla('pantalla-menu-confirmar');
 }
 

@@ -121,8 +121,6 @@ router.post('/visitas', (req, res) => {
     try {
       const plato = db.prepare('SELECT * FROM platos WHERE id = ?').get(plato_id);
       if (!plato) throw Object.assign(new Error('Plato no encontrado'), { status: 404 });
-      if (plato.stock <= 0) throw Object.assign(new Error('Este almuerzo se agotó'), { status: 409 });
-      db.prepare('UPDATE platos SET stock = stock - 1 WHERE id = ?').run(plato_id);
       puntosFinal = plato.puntos;
       detalle = plato.nombre;
       const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
