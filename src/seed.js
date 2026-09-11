@@ -48,16 +48,38 @@ function seed() {
 
   const productos = db.prepare('SELECT COUNT(*) AS n FROM productos').get();
   if (productos.n === 0) {
-    const ins = db.prepare('INSERT INTO productos (nombre, descripcion, emoji, precio, puntos) VALUES (?, ?, ?, ?, ?)');
-    ins.run('Pipeta Antiparasitaria', 'Perro mediano, 1 dosis', '🐩', 18.00, 100);
-    ins.run('Shampoo Hipoalergénico 500ml', 'Avena y aloe', '🧴', 14.00, 80);
-    ins.run('Vitaminas Condroprotectores', '30 tabletas', '💊', 22.00, 120);
-    ins.run('Alimento Premium 2kg', 'Pollo y arroz', '🦴', 28.00, 150);
-    ins.run('Collar Antipulgas', '8 meses protección', '🔗', 16.00, 90);
-    ins.run('Desparasitante Interno', '2 comprimidos', '🩹', 12.00, 70);
-    ins.run('Juguete Interactivo', 'Cuerda y mordedor', '🧸', 10.00, 60);
-    ins.run('Transportadora Plegable', 'Talla M', '🧳', 45.00, 180);
+    const ins = db.prepare('INSERT INTO productos (nombre, descripcion, emoji, precio, puntos, estacion) VALUES (?, ?, ?, ?, ?, ?)');
+    // e2 = Farmacia
+    ins.run('Acetaminofén 500mg', '20 tabletas', '💊', 8.00, 60, 'e2');
+    ins.run('Ibuprofeno 400mg', '16 cápsulas', '💊', 9.50, 70, 'e2');
+    ins.run('Vitamina C 1000mg', '30 tabletas', '🍊', 15.00, 90, 'e2');
+    ins.run('Alcohol en Gel 250ml', '70% alcohol', '🧴', 6.00, 50, 'e2');
+    ins.run('Curitas Variadas x40', 'Resistentes al agua', '🩹', 7.00, 55, 'e2');
+    ins.run('Jarabe para la Tos 120ml', 'Miel y eucalipto', '🍯', 11.00, 75, 'e2');
+    ins.run('Protector Solar SPF50 100ml', 'Alta protección', '☀️', 18.00, 100, 'e2');
+    ins.run('Termómetro Digital', 'Lectura rápida', '🌡️', 13.00, 85, 'e2');
+    // e3 = Veterinaria (duplicado)
+    ins.run('Pipeta Antiparasitaria', 'Perro mediano, 1 dosis', '🐩', 18.00, 100, 'e3');
+    ins.run('Shampoo Hipoalergénico 500ml', 'Avena y aloe', '🧴', 14.00, 80, 'e3');
+    ins.run('Vitaminas Condroprotectores', '30 tabletas', '💊', 22.00, 120, 'e3');
+    ins.run('Alimento Premium 2kg', 'Pollo y arroz', '🦴', 28.00, 150, 'e3');
+    ins.run('Collar Antipulgas', '8 meses protección', '🔗', 16.00, 90, 'e3');
+    ins.run('Desparasitante Interno', '2 comprimidos', '🩹', 12.00, 70, 'e3');
+    ins.run('Juguete Interactivo', 'Cuerda y mordedor', '🧸', 10.00, 60, 'e3');
+    ins.run('Transportadora Plegable', 'Talla M', '🧳', 45.00, 180, 'e3');
     console.log('Productos creados');
+  } else if (productos.n === 8) {
+    db.prepare("UPDATE productos SET estacion = 'e3'").run();
+    const ins = db.prepare('INSERT INTO productos (nombre, descripcion, emoji, precio, puntos, estacion) VALUES (?, ?, ?, ?, ?, ?)');
+    ins.run('Acetaminofén 500mg', '20 tabletas', '💊', 8.00, 60, 'e2');
+    ins.run('Ibuprofeno 400mg', '16 cápsulas', '💊', 9.50, 70, 'e2');
+    ins.run('Vitamina C 1000mg', '30 tabletas', '🍊', 15.00, 90, 'e2');
+    ins.run('Alcohol en Gel 250ml', '70% alcohol', '🧴', 6.00, 50, 'e2');
+    ins.run('Curitas Variadas x40', 'Resistentes al agua', '🩹', 7.00, 55, 'e2');
+    ins.run('Jarabe para la Tos 120ml', 'Miel y eucalipto', '🍯', 11.00, 75, 'e2');
+    ins.run('Protector Solar SPF50 100ml', 'Alta protección', '☀️', 18.00, 100, 'e2');
+    ins.run('Termómetro Digital', 'Lectura rápida', '🌡️', 13.00, 85, 'e2');
+    console.log('Productos farmacia agregados');
   }
 }
 

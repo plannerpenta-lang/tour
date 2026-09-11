@@ -104,6 +104,8 @@ router.get('/menu', (req, res) => {
 });
 
 router.get('/productos', (req, res) => {
+  const { estacion } = req.query;
+  if (estacion) return res.json(db.prepare('SELECT * FROM productos WHERE estacion = ? ORDER BY id').all(estacion));
   res.json(db.prepare('SELECT * FROM productos ORDER BY id').all());
 });
 

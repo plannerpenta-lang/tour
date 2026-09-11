@@ -85,12 +85,14 @@ CREATE TABLE IF NOT EXISTS productos (
   descripcion TEXT,
   emoji TEXT NOT NULL,
   precio REAL NOT NULL,
-  puntos INTEGER NOT NULL
+  puntos INTEGER NOT NULL,
+  estacion TEXT NOT NULL DEFAULT 'e2'
 );
 `);
 
 try { db.exec("ALTER TABLE sesiones ADD COLUMN ubicacion TEXT"); } catch (_) {}
 try { db.exec("ALTER TABLE visitas ADD COLUMN detalle TEXT"); } catch (_) {}
+try { db.exec("ALTER TABLE productos ADD COLUMN estacion TEXT NOT NULL DEFAULT 'e2'"); } catch (_) {}
 
 function ahora() {
   return new Date().toISOString();

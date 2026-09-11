@@ -198,10 +198,12 @@ let seleccionVet = [];
 async function cargarVet() {
   seleccionVet = [];
   actualizarCarrito();
+  const esFarmacia = CODIGO === 'e2';
+  document.querySelector('#pantalla-vet .subtitulo').textContent = esFarmacia ? 'Compra en farmacia — Selecciona lo que deseas' : 'Compra en veterinaria — Selecciona lo que deseas';
   const grid = document.getElementById('grid-productos');
   grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Cargando productos…</p>';
   try {
-    const prods = await api('GET', '/productos');
+    const prods = await api('GET', '/productos?estacion=' + CODIGO);
     grid.innerHTML = '';
     for (const p of prods) {
       const card = document.createElement('div');
