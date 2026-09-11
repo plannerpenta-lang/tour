@@ -94,6 +94,10 @@ function check(nombre, cond, detalle) {
   check('Encuesta gasolina registrada', v5.status === 201, v5);
   const v5incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e5', respuesta1: 'Sí', respuesta2: 'Moto' });
   check('Rechaza gasolina sin gasto', v5incompleta.status === 400, v5incompleta);
+  const v6 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e6', respuesta1: '2 – 3 veces', respuesta2: '₡20.001 – ₡30.000', respuesta3: 'Italiana' });
+  check('Encuesta restaurantes registrada', v6.status === 201, v6);
+  const v6incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e6', respuesta1: '1 vez', respuesta2: '₡0 – ₡20.000' });
+  check('Rechaza restaurantes sin antojo', v6incompleta.status === 400, v6incompleta);
   const dupE1 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1', plato_id: plato.id });
   check('Rechaza almuerzo repetido en Tótem 1', dupE1.status === 409, dupE1);
   const dupE2 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e2' });
@@ -102,7 +106,7 @@ function check(nombre, cond, detalle) {
   check('Rechaza estación repetida', dup.status === 409, dup);
 
   const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id });
-  check('Puntos acumulados > 0', trasVisitas.data.puntos === 430, trasVisitas.data);
+  check('Puntos acumulados > 0', trasVisitas.data.puntos === 530, trasVisitas.data);
 
   console.log('--- 6. Finalización y premio (protegida con PIN) ---');
   const sinPin = await fetch(BASE + '/finalizar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sesion_id: sesionId }) });
@@ -137,13 +141,13 @@ function check(nombre, cond, detalle) {
   check('Dashboard responde', dash.status === 200 && Array.isArray(dash.data.activas), dash);
   check('Muestra ubicación en tiempo real', dash.data.activas.some(a => a.ubicacion === 'e1'), dash.data.activas);
   await api('POST', '/sesiones/liberar', { sesion_id: ses3.data.id });
-  check('Dashboard trae tiempos por estación', Array.isArray(dash.data.tiempos) && dash.data.tiempos.length === 5, dash.data.tiempos);
-  check('Total de estaciones = 5', dash.data.total_estaciones === 5, dash.data.total_estaciones);
+  check('Dashboard trae tiempos por estación', Array.isArray(dash.data.tiempos) && dash.data.tiempos.length === 6, dash.data.tiempos);
+  check('Total de estaciones = 6', dash.data.total_estaciones === 6, dash.data.total_estaciones);
   const histSinPin = await fetch(BASE + '/historial');
   check('Historial rechaza sin PIN', histSinPin.status === 401, { status: histSinPin.status });
   const hist = await api('GET', '/historial', undefined, '1234');
   check('Historial trae registros completos', hist.status === 200 && hist.data.sesiones.length >= 2 && 'telefono' in hist.data.sesiones[0] && 'visitas' in hist.data.sesiones[0], null);
-  check('Historial trae total de estaciones', hist.data.total_estaciones === 5, hist.data.total_estaciones);
+  check('Historial trae total de estaciones', hist.data.total_estaciones === 6, hist.data.total_estaciones);
   const estacionProhibida = await fetch(BASE + '/estaciones', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-staff-pin': '1234' },

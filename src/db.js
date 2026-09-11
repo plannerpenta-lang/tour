@@ -111,6 +111,13 @@ try { db.exec("ALTER TABLE sesiones ADD COLUMN ubicacion TEXT"); } catch (_) {}
 try { db.exec("ALTER TABLE visitas ADD COLUMN detalle TEXT"); } catch (_) {}
 try { db.exec("ALTER TABLE productos ADD COLUMN estacion TEXT NOT NULL DEFAULT 'e2'"); } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN cedula TEXT"); } catch (_) {}
+try {
+  const e6 = db.prepare("SELECT id FROM estaciones WHERE codigo = 'e6'").get();
+  if (!e6) {
+    db.prepare("INSERT INTO estaciones (codigo, nombre, orden, tipo, puntos) VALUES ('e6', 'Estación 6', 6, 'estacion', 100)").run();
+    db.prepare("UPDATE estaciones SET orden = 7 WHERE codigo = 'final'").run();
+  }
+} catch (_) {}
 try { db.exec("DELETE FROM estaciones WHERE codigo = 'e6'"); db.exec("UPDATE estaciones SET orden = 6 WHERE codigo = 'final'"); } catch (_) {}
 
 function ahora() {

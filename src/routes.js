@@ -133,6 +133,29 @@ router.post('/visitas', (req, res) => {
   let puntosFinal = puntos ?? estacion.puntos;
   let detalle = null;
 
+  if (estacion_codigo === 'e6' && (req.body.respuesta1 || req.body.respuesta2 || req.body.respuesta3)) {
+    const r1 = req.body.respuesta1 ? String(req.body.respuesta1).trim() : '';
+    const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';
+    const r3 = req.body.respuesta3 ? String(req.body.respuesta3).trim() : '';
+    if (!r1) return res.status(400).json({ error: 'Responde la primera pregunta' });
+    if (!r2) return res.status(400).json({ error: 'Responde la segunda pregunta' });
+    if (!r3) return res.status(400).json({ error: 'Elige qué quieres comer hoy' });
+    db.exec('BEGIN');
+    try {
+      puntosFinal = estacion.puntos;
+      detalle = `Frecuencia: ${r1} | Gasto: ${r2} | Antojo: ${r3}`;
+      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
+        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
+      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
+      db.exec('COMMIT');
+      return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
+    } catch (e) {
+      db.exec('ROLLBACK');
+      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
+      return res.status(e.status || 500).json({ error: e.message });
+    }
+  }
+
   if (estacion_codigo === 'e4' && req.body.respuesta1) {
     const r1 = String(req.body.respuesta1).trim();
     const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';

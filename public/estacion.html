@@ -128,8 +128,8 @@
 </div>
 
 <div id="pantalla-exito" class="screen">
-  <h1>¡Visita registrada!</h1>
-  <p class="subtitulo">Sigue a la siguiente estación del tour</p>
+  <h1 id="exito-titulo">¡Visita registrada!</h1>
+  <p class="subtitulo" id="exito-sub">Sigue a la siguiente estación del tour</p>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -217,6 +217,12 @@ async function identificar(p) {
       document.getElementById('gas-avatar').textContent = sesionActual.avatar;
       document.getElementById('gas-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       mostrarPantalla('pantalla-vehiculos1');
+    } else if (CODIGO === 'e6') {
+      document.getElementById('rest-avatar').textContent = sesionActual.avatar;
+      document.getElementById('rest-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
+      respuestaRest1 = null;
+      respuestaRest2 = null;
+      mostrarPantalla('pantalla-rest1');
     } else {
       document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
       document.getElementById('sesion-usuario').textContent = sesionActual.usuario.split(' ')[0];
@@ -415,6 +421,54 @@ async function confirmarFarm(rango) {
     });
     mostrarPantalla('pantalla-exito');
     setTimeout(() => location.reload(), 5000);
+  } catch (err) { toast(err.message); }
+}
+
+let respuestaRest1 = null;
+let respuestaRest2 = null;
+const REST_ANTOJOS = [
+  { nombre: 'Carne', emoji: '🥩' },
+  { nombre: 'Italiana', emoji: '🍝' },
+  { nombre: 'Comida rápida', emoji: '🍔' },
+  { nombre: 'Mariscos', emoji: '🦐' }
+];
+
+function irRest2(frecuencia) {
+  respuestaRest1 = frecuencia;
+  respuestaRest2 = null;
+  mostrarPantalla('pantalla-rest2');
+}
+
+function irRest3(gasto) {
+  if (!respuestaRest1) return;
+  respuestaRest2 = gasto;
+  const grid = document.getElementById('grid-rest3');
+  grid.innerHTML = '';
+  REST_ANTOJOS.forEach(a => {
+    const card = document.createElement('div');
+    card.className = 'personaje-card';
+    card.innerHTML = `<span style="font-size:42px">${a.emoji}</span>
+      <span style="font-weight:800; font-size:16px">${a.nombre}</span>`;
+    card.onclick = () => confirmarRest(a.nombre);
+    grid.appendChild(card);
+  });
+  mostrarPantalla('pantalla-rest3');
+}
+
+async function confirmarRest(antojo) {
+  if (!sesionActual || !respuestaRest1 || !respuestaRest2) return;
+  try {
+    await api('POST', '/visitas', {
+      sesion_id: sesionActual.sesion_id ?? sesionActual.id,
+      estacion_codigo: CODIGO,
+      respuesta1: respuestaRest1,
+      respuesta2: respuestaRest2,
+      respuesta3: antojo
+    });
+    document.getElementById('exito-titulo') && (document.getElementById('exito-titulo').textContent = '¡Buen provecho!');
+    document.getElementById('exito-sub').textContent = `Tu elección para hoy: ${antojo}`;
+    mostrarPantalla('pantalla-exito');
+    setTimeout(() => location.reload(), 8000);
   } catch (err) { toast(err.message); }
 }
 

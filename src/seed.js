@@ -5,10 +5,10 @@ function seed() {
   if (estaciones.n === 0) {
     const ins = db.prepare('INSERT INTO estaciones (codigo, nombre, orden, tipo, puntos) VALUES (?, ?, ?, ?, ?)');
     ins.run('registro', 'Registro', 0, 'registro', 0);
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 6; i++) {
       ins.run(`e${i}`, `Estación ${i}`, i, 'estacion', 100);
     }
-    ins.run('final', 'Entrega de Premio', 6, 'final', 0);
+    ins.run('final', 'Entrega de Premio', 7, 'final', 0);
     console.log('Estaciones creadas');
   }
 
