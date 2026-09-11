@@ -10,7 +10,7 @@
 <body>
 
 <div class="barra-superior">
-  <div class="barra-titulo">🏆 Entrega de Premio</div>
+  <div class="barra-titulo">Entrega de Premio</div>
   <div class="estado-conexion online">En línea</div>
 </div>
 
@@ -24,18 +24,18 @@
   <div class="avatar-hero" id="resumen-avatar"></div>
   <h1>¡Felicidades, <span id="resumen-usuario"></span>!</h1>
   <p class="subtitulo">¡Completaste el tour!</p>
-  <button class="boton grande celebrando" onclick="mostrarPantalla('pantalla-pin')">🎁 Recibir mi premio</button>
+  <button class="boton grande celebrando" onclick="mostrarPantalla('pantalla-pin')">Recibir mi premio</button>
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">Volver ←</button>
 </div>
 
 <div id="pantalla-pin" class="screen">
-  <h1>🔒 Confirmación del staff</h1>
+  <h1>Confirmación del staff</h1>
   <p class="subtitulo">Un miembro del equipo debe ingresar el PIN<br>para entregar el premio</p>
   <form class="tarjeta-forma" style="align-items:center" onsubmit="reclamarPremio(event)">
     <input type="password" id="campo-pin-staff" inputmode="numeric" maxlength="12"
       placeholder="PIN" required autocomplete="off"
       style="text-align:center; font-size:24px; letter-spacing:8px; width:260px">
-    <button type="submit" class="boton">Entregar premio 🎁</button>
+    <button type="submit" class="boton">Entregar premio</button>
     <button type="button" class="boton secundario" onclick="liberarSesion(sesionActual.sesion_id ?? sesionActual.id, '¿Liberar este personaje SIN entregar premio?')">
       El usuario se retiró · liberar sin premio
     </button>
@@ -44,7 +44,6 @@
 </div>
 
 <div id="pantalla-premio" class="screen">
-  <div class="avatar-hero celebrando">🎊</div>
   <h1>¡Tu premio!</h1>
   <div class="codigo-premio" id="codigo-premio"></div>
   <p class="subtitulo">Tu personaje queda liberado para el próximo aventurero.</p>

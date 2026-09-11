@@ -29,7 +29,7 @@
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
   <button class="boton secundario" style="margin-top:10px; width:min(480px,90vw); font-size:15px; opacity:.7"
     onclick="liberarSesion(sesionActual.sesion_id ?? sesionActual.id, '¿Salir del tour? Tu personaje quedará libre para otros usuarios.')">
-    🚪 Salir del tour (liberar mi personaje)</button>
+    Salir del tour (liberar mi personaje)</button>
 </div>
 
 <div id="pantalla-menu" class="screen">
@@ -58,7 +58,6 @@
 </div>
 
 <div id="pantalla-comb-confirmar" class="screen">
-  <div style="font-size:70px">⛽</div>
   <h1 id="confirmar-comb-etiqueta"></h1>
   <p class="subtitulo" id="confirmar-comb-desc"></p>
   <button class="boton grande" onclick="confirmarComb()">✓ Confirmar</button>
@@ -72,7 +71,7 @@
   <div id="grid-productos" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
   <div id="carrito-vet" style="background:var(--card); border-radius:16px; padding:16px; width:min(900px,94vw); margin-top:16px; display:none">
     <div style="display:flex; justify-content:space-between; align-items:center">
-      <b>🛒 Carrito (<span id="carrito-count">0</span>)</b>
+      <b>Carrito (<span id="carrito-count">0</span>)</b>
       <span id="carrito-total" style="color:var(--accent2); font-weight:800">€0.00</span>
     </div>
     <div id="carrito-lista" style="color:var(--muted); font-size:14px; margin-top:8px"></div>
@@ -82,7 +81,6 @@
 </div>
 
 <div id="pantalla-exito" class="screen">
-  <div class="avatar-hero celebrando">🎉</div>
   <h1>¡Visita registrada!</h1>
   <p class="subtitulo">Sigue a la siguiente estación del tour</p>
 </div>
@@ -109,7 +107,7 @@ async function iniciar() {
     }
     const anterior = lista.find(e => e.orden === estacion.orden - 1);
     codigoAnterior = anterior ? anterior.codigo : null;
-    document.getElementById('titulo-estacion').textContent = '📍 ' + estacion.nombre;
+    document.getElementById('titulo-estacion').textContent = estacion.nombre;
     document.getElementById('paso-estacion').textContent = `Paso ${estacion.orden} de ${lista.length - 2}`;
     await cargarPersonajes();
   } catch { toast('Error de conexión con el servidor'); }
@@ -227,7 +225,7 @@ async function cargarCombustible() {
       const card = document.createElement('div');
       card.className = 'personaje-card';
       card.style.padding = '18px';
-      card.innerHTML = `<span style="font-size:50px">⛽</span>
+      card.innerHTML = `
         <span style="font-weight:800; font-size:26px; color:var(--accent2)">${c.etiqueta}</span>
         <span style="color:var(--muted); font-size:15px">${c.descripcion}</span>`;
       card.onclick = () => elegirComb(c);

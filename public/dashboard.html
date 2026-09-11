@@ -43,13 +43,13 @@
 <body>
 
 <div class="barra-superior" style="background:rgba(10,26,56,.9)">
-  <div class="barra-titulo">📊 Dashboard del Tour <span class="pulso">● EN VIVO</span></div>
+  <div class="barra-titulo">Dashboard del Tour <span class="pulso">● EN VIVO</span></div>
   <div class="estado-conexion online">En línea</div>
-  <button class="boton mini secundario" onclick="abrirAjustes()">⚙️ Ajustes</button>
+  <button class="boton mini secundario" onclick="abrirAjustes()">Ajustes</button>
 </div>
 
 <div id="pantalla-pin" class="screen activa">
-  <h1>🔒 Acceso staff</h1>
+  <h1>Acceso staff</h1>
   <p class="subtitulo">Ingresa el PIN para ver el dashboard</p>
   <form class="tarjeta-forma" id="forma-pin">
     <input type="password" id="campo-pin" placeholder="PIN" inputmode="numeric" maxlength="12" required style="text-align:center; font-size:24px; letter-spacing:8px">
@@ -59,8 +59,8 @@
 
 <div id="pantalla-panel" class="panel" style="display:none">
   <div class="tabs">
-    <button class="tab activa" id="tab-vivo" onclick="cambiarTab('vivo')">🛰️ En vivo</button>
-    <button class="tab" id="tab-historial" onclick="cambiarTab('historial')">🗂️ Historial completo</button>
+    <button class="tab activa" id="tab-vivo" onclick="cambiarTab('vivo')">En vivo</button>
+    <button class="tab" id="tab-historial" onclick="cambiarTab('historial')">Historial completo</button>
   </div>
 
   <div id="vista-vivo">
@@ -99,7 +99,7 @@
 
 <div class="modal-fondo" id="modal-ajustes">
   <form class="tarjeta-forma" onsubmit="guardarAjustes(event)">
-    <h1 style="font-size:22px">⚙️ Ajustes</h1>
+    <h1 style="font-size:22px">Ajustes</h1>
     <label style="color:var(--muted); font-size:14px">PIN de staff</label>
     <input type="text" id="ajuste-pin" maxlength="12" inputmode="numeric">
     <label style="color:var(--muted); font-size:14px">Timeout de sesión (minutos)</label>
@@ -163,7 +163,7 @@ function pintar(data) {
       return `<tr>
         <td>${a.avatar} <b>${a.personaje}</b></td>
         <td>${a.usuario}</td>
-        <td><span class="badge-ubicacion">📍 ${nombreUbicacion(a.ubicacion)}</span></td>
+        <td><span class="badge-ubicacion">${nombreUbicacion(a.ubicacion)}</span></td>
         <td><b style="color:var(--accent2)">${a.puntos}</b></td>
         <td><div style="align-items:center;display:flex;gap:10px"><span style="font-size:13px">${a.estaciones_visitadas}/${TOTAL_EST}</span><div class="barra-progreso"><div style="width:${a.estaciones_visitadas / TOTAL_EST * 100}%"></div></div></div></td>
         <td>${mins} min</td>
@@ -173,7 +173,7 @@ function pintar(data) {
   }
 
   document.querySelector('#tabla-tiempos tbody').innerHTML =
-    data.tiempos.map(x => `<tr><td>📍 ${x.estacion}</td><td>${x.visitas}</td></tr>`).join('');
+    data.tiempos.map(x => `<tr><td>${x.estacion}</td><td>${x.visitas}</td></tr>`).join('');
 }
 
 async function cargarHistorial() {
@@ -199,10 +199,10 @@ function pintarHistorial() {
     const detalle = `
       <tr class="detalle" id="detalle-${h.sesion_id}" style="display:none"><td colspan="10">
         <div class="detalle-visitas">
-          📋 <b>Recorrido de ${h.nombre} (${h.avatar} ${h.personaje}):</b><br>
+          <b>Recorrido de ${h.nombre} (${h.avatar} ${h.personaje}):</b><br>
           ${h.visitas.length === 0 ? 'Sin estaciones registradas' :
             h.visitas.map(v => `&nbsp;&nbsp;✓ <b>${v.estacion}</b> — ${v.puntos} pts — ${new Date(v.timestamp).toLocaleString('es-CO')}`).join('<br>')}
-          ${h.premio ? `<br>🎁 Premio entregado: <b>${h.premio}</b>` : ''}
+          ${h.premio ? `<br>Premio entregado: <b>${h.premio}</b>` : ''}
         </div>
       </td></tr>`;
     const fecha = iso => iso ? new Date(iso).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '—';

@@ -10,7 +10,7 @@
 <body>
 
 <div class="barra-superior">
-  <div class="barra-titulo">🎟️ Registro del Tour</div>
+  <div class="barra-titulo">Registro del Tour</div>
   <div class="estado-conexion online">En línea</div>
 </div>
 
@@ -82,7 +82,7 @@ async function cargarPersonajes() {
     const lista = await api('GET', '/personajes?estado=disponible');
     grid.innerHTML = '';
     if (lista.length === 0) {
-      grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">No hay personajes disponibles en este momento 😔</p>';
+      grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">No hay personajes disponibles en este momento</p>';
       return;
     }
     for (const p of lista) {
