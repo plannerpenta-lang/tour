@@ -26,7 +26,7 @@
   <h1>¡Hola, <span id="sesion-usuario"></span>!</h1>
   <p class="subtitulo"><span id="sesion-progreso"></span></p>
   <button class="boton grande" id="boton-visita" onclick="registrarVisita()">✓ Confirmar</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
   <button class="boton secundario" style="margin-top:10px; width:min(480px,90vw); font-size:15px; opacity:.7"
     onclick="liberarSesion(sesionActual.sesion_id ?? sesionActual.id, '¿Salir del tour? Tu personaje quedará libre para otros usuarios.')">
     Salir del tour (liberar mi personaje)</button>
@@ -40,7 +40,7 @@
     <button class="boton grande" style="width:100%" onclick="responderVet1('Sí')">Sí</button>
     <button class="boton grande" style="width:100%" onclick="responderVet1('No')">No</button>
   </div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
 </div>
 
 <div id="pantalla-mascotas2" class="screen">
@@ -62,7 +62,7 @@
     <button class="boton grande" style="width:100%" onclick="responderGas1('Sí')">Sí</button>
     <button class="boton grande" style="width:100%" onclick="responderGas1('No')">No</button>
   </div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
 </div>
 
 <div id="pantalla-vehiculos2" class="screen">
@@ -90,7 +90,7 @@
   <div id="grid-despensa" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
   <p style="color:var(--muted); margin-top:14px" id="desp-count"></p>
   <button class="boton grande" id="boton-desp-confirmar" onclick="confirmarDesp()" style="margin-top:10px" disabled>Confirmar</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
 </div>
 
 <div id="pantalla-farm1" class="screen">
@@ -100,7 +100,7 @@
   <div id="grid-farm1" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
   <p style="color:var(--muted); margin-top:14px" id="farm1-count"></p>
   <button class="boton grande" id="boton-farm1" onclick="irFarm2()" style="margin-top:10px" disabled>Continuar</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
 </div>
 
 <div id="pantalla-farm2" class="screen">
@@ -120,7 +120,7 @@
     <button class="boton grande" style="width:100%" onclick="irRest2('4 – 5 veces')">4 – 5 veces</button>
     <button class="boton grande" style="width:100%" onclick="irRest2('Más de 5 veces')">Más de 5 veces</button>
   </div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
 </div>
 
 <div id="pantalla-rest2" class="screen">
@@ -475,6 +475,11 @@ async function registrarVisita() {
 
 function anteriorNombre() {
   return codigoAnterior === 'registro' ? 'el Registro' : (NOMBRES_EST[codigoAnterior] || 'la estación anterior');
+}
+
+function volverAPersonajes() {
+  cargarPersonajes();
+  mostrarPantalla('pantalla-personajes');
 }
 const NOMBRES_EST = {};
 

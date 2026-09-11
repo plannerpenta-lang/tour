@@ -25,7 +25,7 @@
   <h1>¡Felicidades, <span id="resumen-usuario"></span>!</h1>
   <p class="subtitulo">¡Completaste el tour!</p>
   <button class="boton grande celebrando" onclick="mostrarPantalla('pantalla-pin')">Recibir mi premio</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">Volver ←</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">Volver ←</button>
 </div>
 
 <div id="pantalla-pin" class="screen">
@@ -89,8 +89,12 @@ async function identificar(p) {
   } catch (err) { toast(err.message); await cargarPersonajes(); }
 }
 
-async function reclamarPremio(e) {
-  e.preventDefault();
+function volverAPersonajes() {
+  cargarPersonajes();
+  mostrarPantalla('pantalla-personajes');
+}
+
+async function reclamarPremio(e) {  e.preventDefault();
   if (!sesionActual) return;
   const pin = document.getElementById('campo-pin-staff').value;
   try {
