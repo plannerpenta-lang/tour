@@ -32,23 +32,6 @@
     Salir del tour (liberar mi personaje)</button>
 </div>
 
-<div id="pantalla-menu" class="screen">
-  <div class="avatar-hero" id="menu-avatar" style="font-size:50px"></div>
-  <h1 id="menu-saludo"></h1>
-  <p class="subtitulo">Elige tu almuerzo — Menú Típico Tico · ₡5.500</p>
-  <div id="grid-menu" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
-</div>
-
-<div id="pantalla-menu-confirmar" class="screen">
-  <div style="font-size:70px" id="confirmar-emoji"></div>
-  <h1 id="confirmar-plato"></h1>
-  <p class="subtitulo" id="confirmar-desc"></p>
-  <p style="color:var(--accent2); font-size:22px; font-weight:800" id="confirmar-puntos"></p>
-  <button class="boton grande" onclick="confirmarMenu()">✓ Confirmar mi almuerzo</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-menu')">Elegir otro</button>
-</div>
-
 <div id="pantalla-mascotas1" class="screen">
   <div class="avatar-hero" id="vet-avatar" style="font-size:50px"></div>
   <h1 id="vet-saludo"></h1>
@@ -226,29 +209,24 @@ async function identificar(p) {
       return;
     }
     if (CODIGO === 'e1') {
-      document.getElementById('menu-avatar').textContent = sesionActual.avatar;
-      document.getElementById('menu-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
-      await cargarMenu();
-      mostrarPantalla('pantalla-menu');
-    } else if (CODIGO === 'e2') {
       document.getElementById('desp-avatar').textContent = sesionActual.avatar;
       document.getElementById('desp-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       await cargarDesp();
       mostrarPantalla('pantalla-despensa');
-    } else if (CODIGO === 'e3') {
+    } else if (CODIGO === 'e2') {
       document.getElementById('farm-avatar').textContent = sesionActual.avatar;
       document.getElementById('farm-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       cargarFarm1();
       mostrarPantalla('pantalla-farm1');
-    } else if (CODIGO === 'e4') {
+    } else if (CODIGO === 'e3') {
       document.getElementById('vet-avatar').textContent = sesionActual.avatar;
       document.getElementById('vet-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       mostrarPantalla('pantalla-mascotas1');
-    } else if (CODIGO === 'e5') {
+    } else if (CODIGO === 'e4') {
       document.getElementById('gas-avatar').textContent = sesionActual.avatar;
       document.getElementById('gas-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       mostrarPantalla('pantalla-vehiculos1');
-    } else if (CODIGO === 'e6') {
+    } else if (CODIGO === 'e5') {
       document.getElementById('rest-avatar').textContent = sesionActual.avatar;
       document.getElementById('rest-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       respuestaRest1 = null;
@@ -265,44 +243,6 @@ async function identificar(p) {
       mostrarPantalla('pantalla-sesion');
     }
   } catch (err) { toast(err.message); await cargarPersonajes(); }
-}
-
-let platoElegido = null;
-
-async function cargarMenu() {
-  const grid = document.getElementById('grid-menu');
-  grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Cargando menú…</p>';
-  try {
-    const platos = await api('GET', '/menu');
-    grid.innerHTML = '';
-    for (const plato of platos) {
-      const card = document.createElement('div');
-      card.className = 'personaje-card';
-      card.innerHTML = `<span style="font-size:42px">${plato.emoji}</span>
-        <span style="font-weight:800; font-size:16px">${plato.nombre}</span>
-        <span style="color:var(--muted); font-size:13px">${plato.descripcion}</span>`;
-      card.onclick = () => elegirPlato(plato);
-      grid.appendChild(card);
-    }
-  } catch { grid.innerHTML = '<p class="cargando">Error cargando menú</p>'; }
-}
-
-function elegirPlato(plato) {
-  platoElegido = plato;
-  document.getElementById('confirmar-emoji').textContent = plato.emoji;
-  document.getElementById('confirmar-plato').textContent = plato.nombre;
-  document.getElementById('confirmar-desc').textContent = plato.descripcion;
-  document.getElementById('confirmar-puntos').textContent = '';
-  mostrarPantalla('pantalla-menu-confirmar');
-}
-
-async function confirmarMenu() {
-  if (!sesionActual || !platoElegido) return;
-  try {
-    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, plato_id: platoElegido.id });
-    mostrarPantalla('pantalla-exito');
-    setTimeout(() => location.reload(), 5000);
-  } catch (err) { toast(err.message); await cargarMenu(); mostrarPantalla('pantalla-menu'); }
 }
 
 let seleccionDesp = [];

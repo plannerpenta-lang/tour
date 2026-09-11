@@ -6,7 +6,7 @@ Experiencia interactiva lineal. El usuario se registra en Tótem 0, elige un per
 
 | Ítem | Valor |
 |------|-------|
-| Tótems | 8 (Tótem 0 Registro + Tótems 1–6 Estaciones + Tótem 7 Final con premio) — numeración 0–7 para que coincida con el número de estación |
+| Tótems | 7 (Tótem 0 Registro + Tótems 1–5 Estaciones + Tótem 6 Final con premio) — numeración 0–6 para que coincida con el número de estación |
 | Usuarios simultáneos | 6 (uno por estación en el caso base) |
 | Red | Internet — VPS en DigitalOcean (Opción A). Tótems por WiFi del evento contra `https://tour.tudominio.com` |
 | Premio | Configurable (pool de códigos `TOUR-0001`… en BD; entrega protegida con PIN de staff) |
@@ -15,7 +15,7 @@ Experiencia interactiva lineal. El usuario se registra en Tótem 0, elige un per
 ## Arquitectura (Opción A — Nube)
 
 ```
-[T0 Registro] [T1 e1] [T2 e2] [T3 e3] [T4 e4] [T5 e5] [T6 e6] [T7 Final]
+[T0 Registro] [T1 e1] [T2 e2] [T3 e3] [T4 e4] [T5 e5] [T6 Final]
        \          |      |      |      |      |      |       /
         └─────────┴──────┴──────┴──────┴──────┴──────┴───────┘
                               WiFi del evento
@@ -33,7 +33,7 @@ Experiencia interactiva lineal. El usuario se registra en Tótem 0, elige un per
 
 - `usuarios`: id, nombre, telefono, email, consentimiento, creado_en
 - `personajes`: id, nombre, avatar, estado (`disponible` | `en_tour`)
-- `estaciones`: id, codigo (`registro`, `e1`…`e6`, `final`), nombre, orden, tipo, puntos
+- `estaciones`: id, codigo (`registro`, `e1`…`e5`, `final`), nombre, orden, tipo, puntos
 - `sesiones`: id, usuario_id, personaje_id, estado (`activa`|`completada`|`expirada`|`abandonada`), ubicacion (`registro`|`e1`…), iniciada_en, ultima_actividad_en, completada_en, premio
 - `visitas`: id, sesion_id, estacion_id, puntos, timestamp (UNIQUE sesion+estacion)
 - `premios`: id, tipo, valor, estado, sesion_id

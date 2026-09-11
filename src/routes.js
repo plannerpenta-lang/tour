@@ -133,7 +133,7 @@ router.post('/visitas', (req, res) => {
   let puntosFinal = puntos ?? estacion.puntos;
   let detalle = null;
 
-  if (estacion_codigo === 'e6' && (req.body.respuesta1 || req.body.respuesta2 || req.body.respuesta3)) {
+  if (estacion_codigo === 'e5' && (req.body.respuesta1 || req.body.respuesta2 || req.body.respuesta3)) {
     const r1 = req.body.respuesta1 ? String(req.body.respuesta1).trim() : '';
     const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';
     const r3 = req.body.respuesta3 ? String(req.body.respuesta3).trim() : '';
@@ -156,7 +156,7 @@ router.post('/visitas', (req, res) => {
     }
   }
 
-  if (estacion_codigo === 'e4' && req.body.respuesta1) {
+  if (estacion_codigo === 'e3' && req.body.respuesta1) {
     const r1 = String(req.body.respuesta1).trim();
     const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';
     if (r1 !== 'Sí' && r1 !== 'No') return res.status(400).json({ error: 'Responde la primera pregunta' });
@@ -177,7 +177,7 @@ router.post('/visitas', (req, res) => {
     }
   }
 
-  if (estacion_codigo === 'e5' && req.body.respuesta1) {
+  if (estacion_codigo === 'e4' && req.body.respuesta1) {
     const r1 = String(req.body.respuesta1).trim();
     const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';
     const r3 = req.body.respuesta3 ? String(req.body.respuesta3).trim() : '';
@@ -218,7 +218,7 @@ router.post('/visitas', (req, res) => {
     }
   }
 
-  if (estacion_codigo === 'e2' && req.body.despensa_ids) {
+  if (estacion_codigo === 'e1' && req.body.despensa_ids) {
     const ids = req.body.despensa_ids;
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'Selecciona al menos un producto' });
     db.exec('BEGIN');
@@ -240,7 +240,7 @@ router.post('/visitas', (req, res) => {
     }
   }
 
-  if (estacion_codigo === 'e3' && (req.body.respuesta1 || req.body.respuesta2)) {
+  if (estacion_codigo === 'e2' && (req.body.respuesta1 || req.body.respuesta2)) {
     const r1 = req.body.respuesta1;
     const r2 = req.body.respuesta2;
     if (!Array.isArray(r1) || r1.length === 0) return res.status(400).json({ error: 'Responde la primera pregunta' });
@@ -277,27 +277,6 @@ router.post('/visitas', (req, res) => {
       db.exec('COMMIT');
       const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, productos: prods.map(p => p.nombre), puntos: puntosFinal };
       emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
-      return res.status(201).json(visita);
-    } catch (e) {
-      db.exec('ROLLBACK');
-      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
-      return res.status(e.status || 500).json({ error: e.message });
-    }
-  }
-
-  if (estacion_codigo === 'e1' && plato_id) {
-    db.exec('BEGIN');
-    try {
-      const plato = db.prepare('SELECT * FROM platos WHERE id = ?').get(plato_id);
-      if (!plato) throw Object.assign(new Error('Plato no encontrado'), { status: 404 });
-      puntosFinal = plato.puntos;
-      detalle = plato.nombre;
-      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
-        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
-      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
-      db.exec('COMMIT');
-      const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, plato: plato.nombre, puntos: puntosFinal };
-      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre, plato: plato.nombre });
       return res.status(201).json(visita);
     } catch (e) {
       db.exec('ROLLBACK');

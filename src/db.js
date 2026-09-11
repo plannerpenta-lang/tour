@@ -112,10 +112,25 @@ try { db.exec("ALTER TABLE visitas ADD COLUMN detalle TEXT"); } catch (_) {}
 try { db.exec("ALTER TABLE productos ADD COLUMN estacion TEXT NOT NULL DEFAULT 'e2'"); } catch (_) {}
 try { db.exec("ALTER TABLE usuarios ADD COLUMN cedula TEXT"); } catch (_) {}
 try {
-  const e6 = db.prepare("SELECT id FROM estaciones WHERE codigo = 'e6'").get();
-  if (!e6) {
-    db.prepare("INSERT INTO estaciones (codigo, nombre, orden, tipo, puntos) VALUES ('e6', 'Estación 6', 6, 'estacion', 100)").run();
-    db.prepare("UPDATE estaciones SET orden = 7 WHERE codigo = 'final'").run();
+  const n = db.prepare("SELECT COUNT(*) AS n FROM estaciones WHERE tipo = 'estacion'").get().n;
+  const viejo = n === 6 ? db.prepare("SELECT id FROM estaciones WHERE codigo = 'e6'").get() : null;
+  if (viejo) {
+    db.prepare("DELETE FROM visitas WHERE estacion_id = (SELECT id FROM estaciones WHERE codigo = 'e1')").run();
+    db.prepare("DELETE FROM estaciones WHERE codigo = 'e1'").run();
+    const up = db.prepare('UPDATE estaciones SET codigo = ?, nombre = ?, orden = ? WHERE codigo = ?');
+    up.run('e1', 'Estación 1', 1, 'e2');
+    up.run('e2', 'Estación 2', 2, 'e3');
+    up.run('e3', 'Estación 3', 3, 'e4');
+    up.run('e4', 'Estación 4', 4, 'e5');
+    up.run('e5', 'Estación 5', 5, 'e6');
+    db.prepare("UPDATE estaciones SET orden = 6 WHERE codigo = 'final'").run();
+    const ub = db.prepare('UPDATE sesiones SET ubicacion = ? WHERE ubicacion = ?');
+    ub.run('registro', 'e1');
+    ub.run('e1', 'e2');
+    ub.run('e2', 'e3');
+    ub.run('e3', 'e4');
+    ub.run('e4', 'e5');
+    ub.run('e5', 'e6');
   }
 } catch (_) {}
 try { db.exec("DELETE FROM estaciones WHERE codigo = 'e6'"); db.exec("UPDATE estaciones SET orden = 6 WHERE codigo = 'final'"); } catch (_) {}
