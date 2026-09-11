@@ -16,7 +16,7 @@
 
 html, body {
   min-height: 100%;
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
   background: radial-gradient(ellipse at top, var(--bg2), var(--bg) 70%);
   color: var(--text);
   overflow-y: auto;
@@ -39,7 +39,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
 }
 .screen.activa { display: flex; }
 
-h1 { font-size: clamp(28px, 4vw, 48px); margin-bottom: 8px; }
+h1 { font-family: 'Nunito', 'Inter', sans-serif; font-size: clamp(28px, 4vw, 48px); margin-bottom: 8px; }
 .subtitulo { color: var(--muted); font-size: clamp(14px, 1.6vw, 20px); margin-bottom: 32px; text-align: center; }
 
 .tarjeta-forma {
@@ -73,6 +73,7 @@ input:focus { border-color: var(--accent); }
   border-radius: 14px;
   color: #fff;
   cursor: pointer;
+  font-family: 'Nunito', 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 700;
   letter-spacing: .5px;
