@@ -81,6 +81,17 @@ function seed() {
     ins.run('Termómetro Digital', 'Lectura rápida', '🌡️', 13.00, 85, 'e2');
     console.log('Productos farmacia agregados');
   }
+
+  const comb = db.prepare('SELECT COUNT(*) AS n FROM combustible').get();
+  if (comb.n === 0) {
+    const ins = db.prepare('INSERT INTO combustible (monto, etiqueta, descripcion, emoji, puntos) VALUES (?, ?, ?, ?, ?)');
+    ins.run(5000, '₡5.000', '1/4 tanque', '⛽', 60);
+    ins.run(10000, '₡10.000', 'Medio tanque', '⛽', 100);
+    ins.run(18000, '₡18.000', 'Tanque lleno', '⛽', 160);
+    ins.run(7500, '₡7.500', '1/3 tanque', '⛽', 80);
+    ins.run(15000, '₡15.000', '3/4 tanque', '⛽', 130);
+    console.log('Combustible creado');
+  }
 }
 
 seed();

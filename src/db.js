@@ -88,6 +88,15 @@ CREATE TABLE IF NOT EXISTS productos (
   puntos INTEGER NOT NULL,
   estacion TEXT NOT NULL DEFAULT 'e2'
 );
+
+CREATE TABLE IF NOT EXISTS combustible (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  monto INTEGER NOT NULL,
+  etiqueta TEXT NOT NULL,
+  descripcion TEXT,
+  emoji TEXT NOT NULL DEFAULT '⛽',
+  puntos INTEGER NOT NULL
+);
 `);
 
 try { db.exec("ALTER TABLE sesiones ADD COLUMN ubicacion TEXT"); } catch (_) {}

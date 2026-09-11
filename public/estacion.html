@@ -48,6 +48,22 @@
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-menu')">Elegir otro</button>
 </div>
 
+<div id="pantalla-combustible" class="screen">
+  <div class="avatar-hero" id="comb-avatar" style="font-size:50px"></div>
+  <h1 id="comb-saludo"></h1>
+  <p class="subtitulo">Tanquea tu vehículo — Selecciona el monto</p>
+  <div id="grid-combustible" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; width:min(700px,94vw)"></div>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+</div>
+
+<div id="pantalla-comb-confirmar" class="screen">
+  <div style="font-size:70px">⛽</div>
+  <h1 id="confirmar-comb-etiqueta"></h1>
+  <p class="subtitulo" id="confirmar-comb-desc"></p>
+  <button class="boton grande" onclick="confirmarComb()">✓ Confirmar</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-combustible')">Elegir otro</button>
+</div>
+
 <div id="pantalla-vet" class="screen">
   <div class="avatar-hero" id="vet-avatar" style="font-size:50px"></div>
   <h1 id="vet-saludo"></h1>
@@ -142,6 +158,11 @@ async function identificar(p) {
       document.getElementById('vet-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       await cargarVet();
       mostrarPantalla('pantalla-vet');
+    } else if (CODIGO === 'e4') {
+      document.getElementById('comb-avatar').textContent = sesionActual.avatar;
+      document.getElementById('comb-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
+      await cargarCombustible();
+      mostrarPantalla('pantalla-combustible');
     } else {
       document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
       document.getElementById('sesion-usuario').textContent = sesionActual.usuario.split(' ')[0];
@@ -191,6 +212,43 @@ async function confirmarMenu() {
     mostrarPantalla('pantalla-exito');
     setTimeout(() => location.reload(), 5000);
   } catch (err) { toast(err.message); await cargarMenu(); mostrarPantalla('pantalla-menu'); }
+}
+
+let combustibleElegido = null;
+
+async function cargarCombustible() {
+  const grid = document.getElementById('grid-combustible');
+  grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Cargando montos…</p>';
+  try {
+    const lista = await api('GET', '/combustible');
+    grid.innerHTML = '';
+    for (const c of lista) {
+      const card = document.createElement('div');
+      card.className = 'personaje-card';
+      card.style.padding = '18px';
+      card.innerHTML = `<span style="font-size:50px">⛽</span>
+        <span style="font-weight:800; font-size:26px; color:var(--accent2)">${c.etiqueta}</span>
+        <span style="color:var(--muted); font-size:15px">${c.descripcion}</span>`;
+      card.onclick = () => elegirComb(c);
+      grid.appendChild(card);
+    }
+  } catch { grid.innerHTML = '<p class="cargando">Error cargando montos</p>'; }
+}
+
+function elegirComb(c) {
+  combustibleElegido = c;
+  document.getElementById('confirmar-comb-etiqueta').textContent = c.etiqueta;
+  document.getElementById('confirmar-comb-desc').textContent = c.descripcion;
+  mostrarPantalla('pantalla-comb-confirmar');
+}
+
+async function confirmarComb() {
+  if (!sesionActual || !combustibleElegido) return;
+  try {
+    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, combustible_id: combustibleElegido.id });
+    mostrarPantalla('pantalla-exito');
+    setTimeout(() => location.reload(), 5000);
+  } catch (err) { toast(err.message); }
 }
 
 let seleccionVet = [];

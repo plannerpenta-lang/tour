@@ -109,6 +109,10 @@ router.get('/productos', (req, res) => {
   res.json(db.prepare('SELECT * FROM productos ORDER BY id').all());
 });
 
+router.get('/combustible', (req, res) => {
+  res.json(db.prepare('SELECT * FROM combustible ORDER BY monto').all());
+});
+
 // ---- Visitas a estaciones ----
 
 router.post('/visitas', (req, res) => {
@@ -121,6 +125,25 @@ router.post('/visitas', (req, res) => {
 
   let puntosFinal = puntos ?? estacion.puntos;
   let detalle = null;
+
+  if (estacion_codigo === 'e4' && req.body.combustible_id) {
+    db.exec('BEGIN');
+    try {
+      const c = db.prepare('SELECT * FROM combustible WHERE id = ?').get(req.body.combustible_id);
+      if (!c) throw Object.assign(new Error('Monto no encontrado'), { status: 404 });
+      puntosFinal = c.puntos;
+      detalle = c.etiqueta;
+      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
+        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
+      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
+      db.exec('COMMIT');
+      return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, monto: c.etiqueta, puntos: puntosFinal });
+    } catch (e) {
+      db.exec('ROLLBACK');
+      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
+      return res.status(e.status || 500).json({ error: e.message });
+    }
+  }
 
   if ((estacion_codigo === 'e2' || estacion_codigo === 'e3') && req.body.productos_ids) {
     const ids = req.body.productos_ids;
