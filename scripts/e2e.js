@@ -82,8 +82,10 @@ function check(nombre, cond, detalle) {
   check('Productos veterinaria cargados', prodsVet.data.length === 8 && prodsVet.data[0].estacion === 'e3', prodsVet);
   const comb = await api('GET', '/combustible');
   check('Montos combustible cargados', comb.data.length === 5 && comb.data[0].monto === 5000, comb);
-  const v3 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e3', productos_ids: [prodsVet.data[0].id] });
-  check('Compra veterinaria registrada', v3.status === 201, v3);
+  const v3 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e3', respuesta1: ['Botiquín del hogar', 'Cuidado personal'], respuesta2: '₡20.001 – ₡30.000' });
+  check('Encuesta farmacia registrada', v3.status === 201, v3);
+  const v3incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e3', respuesta1: ['Botiquín del hogar'] });
+  check('Rechaza farmacia incompleta', v3incompleta.status === 400, v3incompleta);
   const v4 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e4', combustible_id: comb.data[1].id });
   check('Tanqueo registrado', v4.status === 201 && v4.data.monto, v4);
   const dupE1 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1', plato_id: plato.id });

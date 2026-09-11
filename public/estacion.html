@@ -74,6 +74,23 @@
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
 </div>
 
+<div id="pantalla-farm1" class="screen">
+  <div class="avatar-hero" id="farm-avatar" style="font-size:50px"></div>
+  <h1 id="farm-saludo"></h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Qué compras normalmente en las farmacias?</p>
+  <div id="grid-farm1" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
+  <p style="color:var(--muted); margin-top:14px" id="farm1-count"></p>
+  <button class="boton grande" id="boton-farm1" onclick="irFarm2()" style="margin-top:10px" disabled>Continuar</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+</div>
+
+<div id="pantalla-farm2" class="screen">
+  <h1>Segunda pregunta</h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">En un mes, ¿cuánto gastas aproximadamente en farmacia?</p>
+  <div id="grid-farm2" style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)"></div>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-farm1')">Volver ←</button>
+</div>
+
 <div id="pantalla-vet" class="screen">
   <div class="avatar-hero" id="vet-avatar" style="font-size:50px"></div>
   <h1 id="vet-saludo"></h1>
@@ -168,10 +185,10 @@ async function identificar(p) {
       await cargarDesp();
       mostrarPantalla('pantalla-despensa');
     } else if (CODIGO === 'e3') {
-      document.getElementById('vet-avatar').textContent = sesionActual.avatar;
-      document.getElementById('vet-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
-      await cargarVet();
-      mostrarPantalla('pantalla-vet');
+      document.getElementById('farm-avatar').textContent = sesionActual.avatar;
+      document.getElementById('farm-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
+      cargarFarm1();
+      mostrarPantalla('pantalla-farm1');
     } else if (CODIGO === 'e4') {
       document.getElementById('comb-avatar').textContent = sesionActual.avatar;
       document.getElementById('comb-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
@@ -304,6 +321,75 @@ async function confirmarDesp() {
   if (!sesionActual || seleccionDesp.length === 0) return;
   try {
     await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, despensa_ids: seleccionDesp.map(p => p.id) });
+    mostrarPantalla('pantalla-exito');
+    setTimeout(() => location.reload(), 5000);
+  } catch (err) { toast(err.message); }
+}
+
+const FARM_Q1 = [
+  { nombre: 'Medicamentos prescritos', emoji: '💊' },
+  { nombre: 'Botiquín del hogar', emoji: '🩹' },
+  { nombre: 'Cuidado personal', emoji: '🧴' },
+  { nombre: 'Medicamentos profilácticos', emoji: '💉' }
+];
+const FARM_Q2 = ['₡0 – ₡20.000', '₡20.001 – ₡30.000', 'Más de ₡30.000'];
+let seleccionFarm1 = [];
+let seleccionFarm2 = null;
+
+function cargarFarm1() {
+  seleccionFarm1 = [];
+  actualizarFarm1();
+  const grid = document.getElementById('grid-farm1');
+  grid.innerHTML = '';
+  FARM_Q1.forEach((op, i) => {
+    const card = document.createElement('div');
+    card.className = 'personaje-card';
+    card.id = 'farm1-card-' + i;
+    card.innerHTML = `<span style="font-size:42px">${op.emoji}</span>
+      <span style="font-weight:800; font-size:16px">${op.nombre}</span>`;
+    card.onclick = () => toggleFarm1(i);
+    grid.appendChild(card);
+  });
+}
+
+function toggleFarm1(i) {
+  const idx = seleccionFarm1.indexOf(i);
+  const card = document.getElementById('farm1-card-' + i);
+  if (idx >= 0) { seleccionFarm1.splice(idx, 1); card.style.borderColor = 'transparent'; card.style.background = 'var(--card)'; }
+  else { seleccionFarm1.push(i); card.style.borderColor = 'var(--accent2)'; card.style.background = 'var(--card-hover)'; }
+  actualizarFarm1();
+}
+
+function actualizarFarm1() {
+  document.getElementById('farm1-count').textContent = seleccionFarm1.length ? `${seleccionFarm1.length} seleccionada(s)` : 'Toca las opciones para seleccionarlas';
+  document.getElementById('boton-farm1').disabled = seleccionFarm1.length === 0;
+}
+
+function irFarm2() {
+  if (seleccionFarm1.length === 0) return;
+  seleccionFarm2 = null;
+  const grid = document.getElementById('grid-farm2');
+  grid.innerHTML = '';
+  FARM_Q2.forEach(rango => {
+    const b = document.createElement('button');
+    b.className = 'boton grande';
+    b.style.width = '100%';
+    b.textContent = rango;
+    b.onclick = () => confirmarFarm(rango);
+    grid.appendChild(b);
+  });
+  mostrarPantalla('pantalla-farm2');
+}
+
+async function confirmarFarm(rango) {
+  if (!sesionActual) return;
+  try {
+    await api('POST', '/visitas', {
+      sesion_id: sesionActual.sesion_id ?? sesionActual.id,
+      estacion_codigo: CODIGO,
+      respuesta1: seleccionFarm1.map(i => FARM_Q1[i].nombre),
+      respuesta2: rango
+    });
     mostrarPantalla('pantalla-exito');
     setTimeout(() => location.reload(), 5000);
   } catch (err) { toast(err.message); }
