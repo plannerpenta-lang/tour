@@ -1,76 +1,81 @@
 # PLAN — Tour Gamificado Multi-Tótem
 
-Experiencia interactiva con 6 tótems conectados por WiFi en red local.
-El usuario se registra en el tótem inicial, elige un personaje que lo identifica
-en cada estación, acumula progreso y al final recibe un premio; el personaje se
-libera automáticamente para el siguiente visitante.
+Experiencia interactiva lineal. El usuario se registra en Tótem 0, elige un personaje que lo identifica en cada estación, avanza secuencialmente por 6 estaciones y al final recibe un premio; el personaje se libera para el siguiente visitante. Seguimiento en tiempo real desde dashboard.
 
 ## Requisitos confirmados
 
 | Ítem | Valor |
 |------|-------|
-| Tótems | 6 (1 registro + 4 estaciones + 1 final)* |
-| Usuarios simultáneos | 6 (máx. 1 por tótem) |
-| Red | WiFi, red local |
-| Premio | Configurable (físico o digital) |
-| Avatares | Genéricos |
+| Tótems | 8 (Tótem 0 Registro + Tótems 1–6 Estaciones + Tótem 7 Final con premio) — numeración 0–7 para que coincida con el número de estación |
+| Usuarios simultáneos | 6 (uno por estación en el caso base) |
+| Red | Internet — VPS en DigitalOcean (Opción A). Tótems por WiFi del evento contra `https://tour.tudominio.com` |
+| Premio | Configurable (pool de códigos `TOUR-0001`… en BD; entrega protegida con PIN de staff) |
+| Avatares | Genéricos (12 emojis) |
 
-*\*el número de estaciones intermedias debe ser configurable*
-
-## Arquitectura
+## Arquitectura (Opción A — Nube)
 
 ```
-[T1 Registro] [T2] [T3] [T4] [T5] [T6 Final+Premio]
-      \         |     |     |     |    /
-       └────────┴── WiFi (LAN) ──────┘
-                    │
-        Servidor local (una PC del mismo router)
-          ├── API REST + WebSocket
-          ├── Base de datos embebida
-          └── Dashboard web (tiempo real)
+[T0 Registro] [T1 e1] [T2 e2] [T3 e3] [T4 e4] [T5 e5] [T6 e6] [T7 Final]
+       \          |      |      |      |      |      |       /
+        └─────────┴──────┴──────┴──────┴──────┴──────┴───────┘
+                              WiFi del evento
+                                   │
+                          VPS DigitalOcean
+                            ├── Caddy (HTTPS)
+                            ├── Node.js + Express + Socket.IO
+                            ├── SQLite `data/tour.db` (WAL)
+                            └── Dashboard + frontends estáticos
+                                   │
+                          GitHub Actions (push a main → deploy automático)
 ```
 
-Sin nube: todo corre en la LAN. Un solo proceso Node.js sirve API,
-frontends de tótems y dashboard.
+## Modelo de datos (SQLite `node:sqlite`)
 
-## Modelo de datos
-
-- `usuarios`: id, nombre, teléfono/email, consentimiento, creado_en
-- `personajes`: id, nombre, avatar_url, estado (`disponible` | `en_uso` | `en_tour`)
-- `sesiones`: id, usuario_id, personaje_id, estado (`activa` | `completada` | `expirada`), iniciada_en, completada_en
-- `estaciones`: id, nombre, orden (configurable desde BD)
-- `visitas`: id, sesion_id, estacion_id, puntos, timestamp
+- `usuarios`: id, nombre, telefono, email, consentimiento, creado_en
+- `personajes`: id, nombre, avatar, estado (`disponible` | `en_tour`)
+- `estaciones`: id, codigo (`registro`, `e1`…`e6`, `final`), nombre, orden, tipo, puntos
+- `sesiones`: id, usuario_id, personaje_id, estado (`activa`|`completada`|`expirada`|`abandonada`), ubicacion (`registro`|`e1`…), iniciada_en, ultima_actividad_en, completada_en, premio
+- `visitas`: id, sesion_id, estacion_id, puntos, timestamp (UNIQUE sesion+estacion)
+- `premios`: id, tipo, valor, estado, sesion_id
+- `config`: clave/valor (`staff_pin`, `timeout_min`)
 
 ## Flujo del usuario
 
-1. **T1 Registro**: datos personales + consentimiento → grid de avatares disponibles → personaje queda bloqueado para él
-2. **T2–T5 Estaciones**: toca su avatar (solo se listan personajes `en_uso`) → gana puntos/logro → queda registrado en su sesión
-3. **T6 Final**: toca su avatar → resumen del recorrido → entrega de premio → personaje pasa a `disponible`
-4. **Timeout**: si un usuario abandona, la sesión expira tras N minutos de inactividad y el personaje se libera solo
+1. **T0 Registro**: datos + consentimiento → grid de avatares disponibles → confirmación → `POST /sesiones` crea sesión con `ubicacion='registro'`, personaje pasa a `en_tour`. Pantalla de éxito con botón OK y auto-reset 15s.
+2. **T1–T6 Estaciones** (`/estacion.html?e=eN`): solo se listan personajes cuya `ubicacion` es el paso anterior (`T1` muestra `registro`, `T2` muestra `e1`…). Al tocar su avatar → `POST /totem/login` actualiza `ubicacion`. Botón registra visita (`POST /visitas`), bloquea repetir estación. Botón "Salir del tour" libera personaje (`POST /sesiones/liberar`). Flujo estrictamente lineal — imposible saltarse pasos.
+3. **T7 Final** (`/final.html`): lista solo personajes de `e6` → resumen + PIN de staff → `POST /finalizar` asigna premio del pool, marca `completada`, libera personaje. Botón "liberar sin premio".
+4. **Timeout**: sesión `activa` sin actividad > `timeout_min` (configurable desde dashboard) → `expirada` y personaje a `disponible`.
 
-## Stack propuesto
+## Stack real
 
-- Backend: Node.js + Express + Socket.IO
-- BD: SQLite (embebida, cero instalación, suficiente para 6 usuarios)
-- Frontends: React (Vite) — una app de registro, un componente genérico de estación parametrizado por `estacion_id`, app final, dashboard
-- Kiosco: navegador Chromium fullscreen (modo kiosco), auto-reset a pantalla idle
+- Backend: Node.js 25 + Express 4 + Socket.IO 4
+- BD: SQLite vía `node:sqlite` (DatabaseSync, sin nativos)
+- Frontends: HTML/CSS/JS vanilla (sin build), `public/` servido por Express, modo kiosco Chromium `--kiosk`, auto-reset por inactividad, retry de red, indicador de conexión
+- Dashboard: `public/dashboard.html` — pestañas En vivo (ubicación actual por personaje, progreso, ritmo por estación) + Historial completo (filtrable, detalle expandible), protegido con PIN, export CSV, ajustes de timeout/PIN
+- Despliegue: Droplet DO Ubuntu 22.04 + pm2 (`ecosystem.config.cjs`) + Caddy (HTTPS) + GitHub Actions (`.github/workflows/deploy.yml`)
 
-## Fases de desarrollo
+## Estado de fases
 
-| Fase | Entregable | Estimación |
-|------|-----------|------------|
-| 1. Diseño | Flujos UX, avatares genéricos, branding | 3 días |
-| 2. Núcleo backend | Registro, bloqueo de personaje, API de progreso, timeouts | 4 días |
-| 3. Tótems | App registro + componente genérico de estación + app final | 5 días |
-| 4. Dashboard | Seguimiento en vivo: sesiones activas, ocupación, premios | 3 días |
-| 5. Cierre | Lógica premio/liberación, pruebas E2E con los 6 tótems | 3 días |
+| Fase | Estado |
+|------|--------|
+| 1. Diseño | Hecho |
+| 2. Núcleo backend | Hecho (tests E2E 36/36) |
+| 3. Tótems | Hecho |
+| 4. Dashboard | Hecho |
+| 5. Seguridad (PIN, flujo lineal, liberación, retry) | Hecho |
+| 6. Despliegue DO | Archivos listos (`DEPLOY.md`, `Caddyfile`, `ecosystem.config.cjs`, CI) — pendiente crear Droplet |
 
 ## Riesgos y mitigaciones
 
 | Riesgo | Mitigación |
 |--------|-----------|
-| Caída de WiFi | Los tótems reintentan y muestran estado de conexión; servidor local evita depender de internet |
-| Usuario abandona a mitad | Timeout automático de sesión (ej. 15 min) + liberación de personaje |
-| Dos usuarios eligen el mismo avatar | Bloqueo transaccional central en el momento del toque |
-| Navegador del tótem se sale del modo kiosco | Auto-reset por inactividad + arranque automático del navegador |
-| Datos personales | Mínimos campos + checkbox de consentimiento (ley de datos) |
+| Caída de internet del evento | Reintentos en frontends + estado de conexión; para blindaje total se puede añadir servidor local como fallback |
+| Usuario abandona a mitad | Timeout configurable + liberación voluntaria |
+| Dos usuarios eligen mismo avatar | Bloqueo transaccional en `POST /sesiones` (409) |
+| Suplantación en estación | Flujo lineal + personaje solo visible en el paso correcto |
+| Exposición de dashboard/premios | PIN de staff (`x-staff-pin`) en `GET /dashboard`, `GET /historial`, `POST /finalizar`, `GET /exportar.csv` |
+| Datos personales | Mínimos campos + consentimiento; `data/tour.db` en `.gitignore`, backups privados |
+
+## Próximo paso acordado
+
+Definir **qué contendrá cada tótem** (pantallas, textos, interacciones y premios por estación).
