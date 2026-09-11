@@ -62,7 +62,7 @@ async function cargarPersonajes() {
     if (!codigoUltimaEstacion) {
       const lista = await api('GET', '/estaciones');
       const ests = lista.filter(e => e.tipo === 'estacion');
-      codigoUltimaEstacion = ests.length ? ests[ests.length - 1].codigo : 'e6';
+      codigoUltimaEstacion = ests.length ? ests[ests.length - 1].codigo : 'e5';
     }
     const enTour = await api('GET', `/personajes?estado=en_tour&ubicacion=${codigoUltimaEstacion}`);
     grid.innerHTML = '';

@@ -126,13 +126,13 @@ function check(nombre, cond, detalle) {
   check('Dashboard responde', dash.status === 200 && Array.isArray(dash.data.activas), dash);
   check('Muestra ubicación en tiempo real', dash.data.activas.some(a => a.ubicacion === 'e1'), dash.data.activas);
   await api('POST', '/sesiones/liberar', { sesion_id: ses3.data.id });
-  check('Dashboard trae tiempos por estación', Array.isArray(dash.data.tiempos) && dash.data.tiempos.length === 6, dash.data.tiempos);
-  check('Total de estaciones = 6', dash.data.total_estaciones === 6, dash.data.total_estaciones);
+  check('Dashboard trae tiempos por estación', Array.isArray(dash.data.tiempos) && dash.data.tiempos.length === 5, dash.data.tiempos);
+  check('Total de estaciones = 5', dash.data.total_estaciones === 5, dash.data.total_estaciones);
   const histSinPin = await fetch(BASE + '/historial');
   check('Historial rechaza sin PIN', histSinPin.status === 401, { status: histSinPin.status });
   const hist = await api('GET', '/historial', undefined, '1234');
   check('Historial trae registros completos', hist.status === 200 && hist.data.sesiones.length >= 2 && 'telefono' in hist.data.sesiones[0] && 'visitas' in hist.data.sesiones[0], null);
-  check('Historial trae total de estaciones', hist.data.total_estaciones === 6, hist.data.total_estaciones);
+  check('Historial trae total de estaciones', hist.data.total_estaciones === 5, hist.data.total_estaciones);
   const estacionProhibida = await fetch(BASE + '/estaciones', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-staff-pin': '1234' },
