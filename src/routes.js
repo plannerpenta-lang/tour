@@ -148,6 +148,7 @@ router.post('/visitas', (req, res) => {
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
       db.exec('COMMIT');
+      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
     } catch (e) {
       db.exec('ROLLBACK');
@@ -169,6 +170,7 @@ router.post('/visitas', (req, res) => {
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
       db.exec('COMMIT');
+      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
     } catch (e) {
       db.exec('ROLLBACK');
@@ -191,6 +193,7 @@ router.post('/visitas', (req, res) => {
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
       db.exec('COMMIT');
+      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
     } catch (e) {
       db.exec('ROLLBACK');
@@ -210,6 +213,7 @@ router.post('/visitas', (req, res) => {
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
       db.exec('COMMIT');
+      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, monto: c.etiqueta, puntos: puntosFinal });
     } catch (e) {
       db.exec('ROLLBACK');
@@ -232,6 +236,7 @@ router.post('/visitas', (req, res) => {
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
       db.exec('COMMIT');
+      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, productos: items.map(p => p.nombre), puntos: puntosFinal });
     } catch (e) {
       db.exec('ROLLBACK');
@@ -253,6 +258,7 @@ router.post('/visitas', (req, res) => {
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
       db.exec('COMMIT');
+      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
     } catch (e) {
       db.exec('ROLLBACK');

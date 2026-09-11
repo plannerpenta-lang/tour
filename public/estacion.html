@@ -479,7 +479,7 @@ function anteriorNombre() {
 const NOMBRES_EST = {};
 
 socket.on('actualizacion', (msg) => {
-  if (['sesion_iniciada', 'premio_entregado', 'sesion_expirada', 'sesion_liberada'].includes(msg.tipo)) {
+  if (['sesion_iniciada', 'visita_registrada', 'premio_entregado', 'sesion_expirada', 'sesion_liberada'].includes(msg.tipo)) {
     if (document.getElementById('pantalla-personajes').classList.contains('activa')) cargarPersonajes();
   }
 });

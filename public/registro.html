@@ -120,7 +120,7 @@ async function confirmarSeleccion() {
 }
 
 socket.on('actualizacion', (msg) => {
-  if (['sesion_iniciada', 'premio_entregado', 'sesion_expirada'].includes(msg.tipo)) {
+  if (['sesion_iniciada', 'premio_entregado', 'sesion_expirada', 'sesion_liberada'].includes(msg.tipo)) {
     if (document.getElementById('pantalla-personajes').classList.contains('activa')) cargarPersonajes();
   }
 });
