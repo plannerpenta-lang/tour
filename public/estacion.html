@@ -137,7 +137,7 @@ async function identificar(p) {
       document.getElementById('menu-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       await cargarMenu();
       mostrarPantalla('pantalla-menu');
-    } else if (CODIGO === 'e2') {
+    } else if (CODIGO === 'e2' || CODIGO === 'e3') {
       document.getElementById('vet-avatar').textContent = sesionActual.avatar;
       document.getElementById('vet-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       await cargarVet();

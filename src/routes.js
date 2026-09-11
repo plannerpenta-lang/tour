@@ -120,7 +120,7 @@ router.post('/visitas', (req, res) => {
   let puntosFinal = puntos ?? estacion.puntos;
   let detalle = null;
 
-  if (estacion_codigo === 'e2' && req.body.productos_ids) {
+  if ((estacion_codigo === 'e2' || estacion_codigo === 'e3') && req.body.productos_ids) {
     const ids = req.body.productos_ids;
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'Selecciona al menos un producto' });
     db.exec('BEGIN');
