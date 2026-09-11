@@ -1,12 +1,12 @@
 :root {
-  --bg: #0f1226;
-  --bg2: #1a1f3d;
-  --card: #232a52;
-  --card-hover: #2e3770;
-  --accent: #7c5cff;
-  --accent2: #00d4ff;
-  --ok: #2ecc71;
-  --warn: #f39c12;
+  --bg: #0a1a38;
+  --bg2: #143579;
+  --card: #1d3a75;
+  --card-hover: #2a5298;
+  --accent: #00B3E3;
+  --accent2: #449100;
+  --ok: #449100;
+  --warn: #BBC53B;
   --err: #e74c3c;
   --text: #ffffff;
   --muted: #9aa3c7;
@@ -169,7 +169,7 @@ input:focus { border-color: var(--accent); }
 .barra-superior {
   align-items: center;
   backdrop-filter: blur(8px);
-  background: rgba(15,18,38,.92);
+  background: rgba(10,26,56,.92);
   display: flex;
   gap: 16px;
   left: 0;
@@ -182,5 +182,5 @@ input:focus { border-color: var(--accent); }
 .barra-titulo { flex: 1; font-size: 22px; font-weight: 700; }
 .barra-paso { background: var(--card); border-radius: 999px; color: var(--accent2); font-size: 16px; font-weight: 700; padding: 8px 20px; }
 .estado-conexion { border-radius: 999px; font-size: 13px; padding: 6px 14px; }
-.estado-conexion.online { background: rgba(46,204,113,.15); color: var(--ok); }
+.estado-conexion.online { background: rgba(68,145,0,.35); color: var(--text); }
 .estado-conexion.offline { background: rgba(231,76,60,.15); color: var(--err); }
