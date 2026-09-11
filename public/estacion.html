@@ -48,6 +48,22 @@
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-menu')">Elegir otro</button>
 </div>
 
+<div id="pantalla-vet" class="screen">
+  <div class="avatar-hero" id="vet-avatar" style="font-size:50px"></div>
+  <h1 id="vet-saludo"></h1>
+  <p class="subtitulo">Compra en veterinaria — Selecciona lo que deseas</p>
+  <div id="grid-productos" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
+  <div id="carrito-vet" style="background:var(--card); border-radius:16px; padding:16px; width:min(900px,94vw); margin-top:16px; display:none">
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <b>🛒 Carrito (<span id="carrito-count">0</span>)</b>
+      <span id="carrito-total" style="color:var(--accent2); font-weight:800">€0.00</span>
+    </div>
+    <div id="carrito-lista" style="color:var(--muted); font-size:14px; margin-top:8px"></div>
+  </div>
+  <button class="boton grande" id="boton-vet-confirmar" onclick="confirmarVet()" style="margin-top:16px" disabled>✓ Confirmar compra</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+</div>
+
 <div id="pantalla-exito" class="screen">
   <div class="avatar-hero celebrando">🎉</div>
   <h1>¡Visita registrada!</h1>
@@ -121,6 +137,11 @@ async function identificar(p) {
       document.getElementById('menu-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       await cargarMenu();
       mostrarPantalla('pantalla-menu');
+    } else if (CODIGO === 'e2') {
+      document.getElementById('vet-avatar').textContent = sesionActual.avatar;
+      document.getElementById('vet-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
+      await cargarVet();
+      mostrarPantalla('pantalla-vet');
     } else {
       document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
       document.getElementById('sesion-usuario').textContent = sesionActual.usuario.split(' ')[0];
@@ -170,6 +191,57 @@ async function confirmarMenu() {
     mostrarPantalla('pantalla-exito');
     setTimeout(() => location.reload(), 5000);
   } catch (err) { toast(err.message); await cargarMenu(); mostrarPantalla('pantalla-menu'); }
+}
+
+let seleccionVet = [];
+
+async function cargarVet() {
+  seleccionVet = [];
+  actualizarCarrito();
+  const grid = document.getElementById('grid-productos');
+  grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Cargando productos…</p>';
+  try {
+    const prods = await api('GET', '/productos');
+    grid.innerHTML = '';
+    for (const p of prods) {
+      const card = document.createElement('div');
+      card.className = 'personaje-card';
+      card.id = 'vet-card-' + p.id;
+      card.innerHTML = `<span style="font-size:42px">${p.emoji}</span>
+        <span style="font-weight:800; font-size:16px">${p.nombre}</span>
+        <span style="color:var(--muted); font-size:13px">${p.descripcion}</span>
+        <span style="color:var(--accent2); font-size:14px; font-weight:700">€${p.precio.toFixed(2)}</span>`;
+      card.onclick = () => toggleVet(p);
+      grid.appendChild(card);
+    }
+  } catch { grid.innerHTML = '<p class="cargando">Error cargando productos</p>'; }
+}
+
+function toggleVet(p) {
+  const idx = seleccionVet.findIndex(x => x.id === p.id);
+  const card = document.getElementById('vet-card-' + p.id);
+  if (idx >= 0) { seleccionVet.splice(idx, 1); card.style.borderColor = 'transparent'; card.style.background = 'var(--card)'; }
+  else { seleccionVet.push(p); card.style.borderColor = 'var(--accent2)'; card.style.background = 'var(--card-hover)'; }
+  actualizarCarrito();
+}
+
+function actualizarCarrito() {
+  const box = document.getElementById('carrito-vet');
+  const total = seleccionVet.reduce((s, p) => s + p.precio, 0);
+  document.getElementById('carrito-count').textContent = seleccionVet.length;
+  document.getElementById('carrito-total').textContent = '€' + total.toFixed(2);
+  document.getElementById('carrito-lista').textContent = seleccionVet.length ? seleccionVet.map(p => p.nombre).join(', ') : '';
+  box.style.display = seleccionVet.length ? 'block' : 'none';
+  document.getElementById('boton-vet-confirmar').disabled = seleccionVet.length === 0;
+}
+
+async function confirmarVet() {
+  if (!sesionActual || seleccionVet.length === 0) return;
+  try {
+    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, productos_ids: seleccionVet.map(p => p.id) });
+    mostrarPantalla('pantalla-exito');
+    setTimeout(() => location.reload(), 5000);
+  } catch (err) { toast(err.message); }
 }
 
 async function registrarVisita() {

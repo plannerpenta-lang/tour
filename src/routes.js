@@ -103,6 +103,10 @@ router.get('/menu', (req, res) => {
   res.json(db.prepare('SELECT * FROM platos ORDER BY id').all());
 });
 
+router.get('/productos', (req, res) => {
+  res.json(db.prepare('SELECT * FROM productos ORDER BY id').all());
+});
+
 // ---- Visitas a estaciones ----
 
 router.post('/visitas', (req, res) => {
@@ -115,6 +119,30 @@ router.post('/visitas', (req, res) => {
 
   let puntosFinal = puntos ?? estacion.puntos;
   let detalle = null;
+
+  if (estacion_codigo === 'e2' && req.body.productos_ids) {
+    const ids = req.body.productos_ids;
+    if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'Selecciona al menos un producto' });
+    db.exec('BEGIN');
+    try {
+      const placeholders = ids.map(() => '?').join(',');
+      const prods = db.prepare(`SELECT * FROM productos WHERE id IN (${placeholders})`).all(...ids);
+      if (prods.length !== ids.length) throw Object.assign(new Error('Producto no encontrado'), { status: 404 });
+      puntosFinal = prods.reduce((s, p) => s + p.puntos, 0);
+      detalle = prods.map(p => p.nombre).join(', ');
+      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
+        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
+      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
+      db.exec('COMMIT');
+      const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, productos: prods.map(p => p.nombre), puntos: puntosFinal };
+      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
+      return res.status(201).json(visita);
+    } catch (e) {
+      db.exec('ROLLBACK');
+      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
+      return res.status(e.status || 500).json({ error: e.message });
+    }
+  }
 
   if (estacion_codigo === 'e1' && plato_id) {
     db.exec('BEGIN');

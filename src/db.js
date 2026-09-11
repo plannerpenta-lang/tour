@@ -78,6 +78,15 @@ CREATE TABLE IF NOT EXISTS platos (
   stock INTEGER NOT NULL,
   stock_inicial INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS productos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  descripcion TEXT,
+  emoji TEXT NOT NULL,
+  precio REAL NOT NULL,
+  puntos INTEGER NOT NULL
+);
 `);
 
 try { db.exec("ALTER TABLE sesiones ADD COLUMN ubicacion TEXT"); } catch (_) {}

@@ -45,6 +45,20 @@ function seed() {
     ins.run('Casado Vegetariano', 'Arroz, frijoles, vegetales, ensalada', '🥗', 110, 10, 10);
     console.log('Platos creados');
   }
+
+  const productos = db.prepare('SELECT COUNT(*) AS n FROM productos').get();
+  if (productos.n === 0) {
+    const ins = db.prepare('INSERT INTO productos (nombre, descripcion, emoji, precio, puntos) VALUES (?, ?, ?, ?, ?)');
+    ins.run('Pipeta Antiparasitaria', 'Perro mediano, 1 dosis', '🐩', 18.00, 100);
+    ins.run('Shampoo Hipoalergénico 500ml', 'Avena y aloe', '🧴', 14.00, 80);
+    ins.run('Vitaminas Condroprotectores', '30 tabletas', '💊', 22.00, 120);
+    ins.run('Alimento Premium 2kg', 'Pollo y arroz', '🦴', 28.00, 150);
+    ins.run('Collar Antipulgas', '8 meses protección', '🔗', 16.00, 90);
+    ins.run('Desparasitante Interno', '2 comprimidos', '🩹', 12.00, 70);
+    ins.run('Juguete Interactivo', 'Cuerda y mordedor', '🧸', 10.00, 60);
+    ins.run('Transportadora Plegable', 'Talla M', '🧳', 45.00, 180);
+    console.log('Productos creados');
+  }
 }
 
 seed();

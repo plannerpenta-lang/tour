@@ -71,7 +71,11 @@ function check(nombre, cond, detalle) {
   check('Ya no aparece en Tótem 1 tras confirmar', !enRegistroTrasVisita.data.some(p => p.nombre === 'Zorro'), null);
   const enE2trasVisita = await api('GET', '/personajes?estado=en_tour&ubicacion=e1');
   check('Ahora aparece en Tótem 2', enE2trasVisita.data.some(p => p.nombre === 'Zorro'), null);
-  for (const cod of ['e2', 'e3', 'e4']) {
+  const prods = await api('GET', '/productos');
+  check('Productos veterinaria cargados', prods.data.length === 8, prods);
+  const v2 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e2', productos_ids: [prods.data[0].id, prods.data[1].id] });
+  check('Compra veterinaria registrada', v2.status === 201 && v2.data.productos, v2);
+  for (const cod of ['e3', 'e4']) {
     const v = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: cod });
     check(`Visita ${cod} registrada`, v.status === 201, v);
   }
@@ -82,8 +86,8 @@ function check(nombre, cond, detalle) {
   const dup = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1' });
   check('Rechaza estación repetida', dup.status === 409, dup);
 
-  const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id, estacion_codigo: 'e4' });
-  check('Puntos acumulados = 400', trasVisitas.data.puntos === 400, trasVisitas.data);
+  const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id });
+  check('Puntos acumulados > 0', trasVisitas.data.puntos === 480, trasVisitas.data);
 
   console.log('--- 6. Finalización y premio (protegida con PIN) ---');
   const sinPin = await fetch(BASE + '/finalizar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sesion_id: sesionId }) });
