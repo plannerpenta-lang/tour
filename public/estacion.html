@@ -127,6 +127,37 @@
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-farm1')">Volver ←</button>
 </div>
 
+<div id="pantalla-rest1" class="screen">
+  <div class="avatar-hero" id="rest-avatar" style="font-size:50px"></div>
+  <h1 id="rest-saludo"></h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Cuántas veces al mes sales a comer fuera?</p>
+  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
+    <button class="boton grande" style="width:100%" onclick="irRest2('1 vez')">1 vez</button>
+    <button class="boton grande" style="width:100%" onclick="irRest2('2 – 3 veces')">2 – 3 veces</button>
+    <button class="boton grande" style="width:100%" onclick="irRest2('4 – 5 veces')">4 – 5 veces</button>
+    <button class="boton grande" style="width:100%" onclick="irRest2('Más de 5 veces')">Más de 5 veces</button>
+  </div>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+</div>
+
+<div id="pantalla-rest2" class="screen">
+  <h1>Segunda pregunta</h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">Normalmente, ¿cuánto gastas en una comida?</p>
+  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
+    <button class="boton grande" style="width:100%" onclick="irRest3('₡0 – ₡20.000')">₡0 – ₡20.000</button>
+    <button class="boton grande" style="width:100%" onclick="irRest3('₡20.001 – ₡30.000')">₡20.001 – ₡30.000</button>
+    <button class="boton grande" style="width:100%" onclick="irRest3('Más de ₡30.000')">Más de ₡30.000</button>
+  </div>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-rest1')">Volver ←</button>
+</div>
+
+<div id="pantalla-rest3" class="screen">
+  <h1>Tercera pregunta</h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">Hoy, ¿qué quieres comer?</p>
+  <div id="grid-rest3" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-rest2')">Volver ←</button>
+</div>
+
 <div id="pantalla-exito" class="screen">
   <h1 id="exito-titulo">¡Visita registrada!</h1>
   <p class="subtitulo" id="exito-sub">Sigue a la siguiente estación del tour</p>
@@ -272,43 +303,6 @@ async function confirmarMenu() {
     mostrarPantalla('pantalla-exito');
     setTimeout(() => location.reload(), 5000);
   } catch (err) { toast(err.message); await cargarMenu(); mostrarPantalla('pantalla-menu'); }
-}
-
-let combustibleElegido = null;
-
-async function cargarCombustible() {
-  const grid = document.getElementById('grid-combustible');
-  grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Cargando montos…</p>';
-  try {
-    const lista = await api('GET', '/combustible');
-    grid.innerHTML = '';
-    for (const c of lista) {
-      const card = document.createElement('div');
-      card.className = 'personaje-card';
-      card.style.padding = '18px';
-      card.innerHTML = `
-        <span style="font-weight:800; font-size:26px; color:var(--accent2)">${c.etiqueta}</span>
-        <span style="color:var(--muted); font-size:15px">${c.descripcion}</span>`;
-      card.onclick = () => elegirComb(c);
-      grid.appendChild(card);
-    }
-  } catch { grid.innerHTML = '<p class="cargando">Error cargando montos</p>'; }
-}
-
-function elegirComb(c) {
-  combustibleElegido = c;
-  document.getElementById('confirmar-comb-etiqueta').textContent = c.etiqueta;
-  document.getElementById('confirmar-comb-desc').textContent = c.descripcion;
-  mostrarPantalla('pantalla-comb-confirmar');
-}
-
-async function confirmarComb() {
-  if (!sesionActual || !combustibleElegido) return;
-  try {
-    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, combustible_id: combustibleElegido.id });
-    mostrarPantalla('pantalla-exito');
-    setTimeout(() => location.reload(), 5000);
-  } catch (err) { toast(err.message); }
 }
 
 let seleccionDesp = [];
@@ -472,7 +466,6 @@ async function confirmarRest(antojo) {
   } catch (err) { toast(err.message); }
 }
 
-let seleccionVet = [];
 let tipoVehiculo = null;
 const TIPOS_VEHICULO = ['Automóvil', 'SUV', 'Moto', '4x4', 'Otro'];
 
@@ -526,56 +519,6 @@ async function responderGas3(gasto) {
   if (!sesionActual || !tipoVehiculo) return;
   try {
     await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'Sí', respuesta2: tipoVehiculo, respuesta3: gasto });
-    mostrarPantalla('pantalla-exito');
-    setTimeout(() => location.reload(), 5000);
-  } catch (err) { toast(err.message); }
-}
-
-async function cargarVet() {
-  seleccionVet = [];
-  actualizarCarrito();
-  document.querySelector('#pantalla-vet .subtitulo').textContent = 'Compra en veterinaria — Selecciona lo que deseas';
-  const grid = document.getElementById('grid-productos');
-  grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Cargando productos…</p>';
-  try {
-    const prods = await api('GET', '/productos?estacion=' + CODIGO);
-    grid.innerHTML = '';
-    for (const p of prods) {
-      const card = document.createElement('div');
-      card.className = 'personaje-card';
-      card.id = 'vet-card-' + p.id;
-      card.innerHTML = `<span style="font-size:42px">${p.emoji}</span>
-        <span style="font-weight:800; font-size:16px">${p.nombre}</span>
-        <span style="color:var(--muted); font-size:13px">${p.descripcion}</span>
-        <span style="color:var(--accent2); font-size:14px; font-weight:700">€${p.precio.toFixed(2)}</span>`;
-      card.onclick = () => toggleVet(p);
-      grid.appendChild(card);
-    }
-  } catch { grid.innerHTML = '<p class="cargando">Error cargando productos</p>'; }
-}
-
-function toggleVet(p) {
-  const idx = seleccionVet.findIndex(x => x.id === p.id);
-  const card = document.getElementById('vet-card-' + p.id);
-  if (idx >= 0) { seleccionVet.splice(idx, 1); card.style.borderColor = 'transparent'; card.style.background = 'var(--card)'; }
-  else { seleccionVet.push(p); card.style.borderColor = 'var(--accent2)'; card.style.background = 'var(--card-hover)'; }
-  actualizarCarrito();
-}
-
-function actualizarCarrito() {
-  const box = document.getElementById('carrito-vet');
-  const total = seleccionVet.reduce((s, p) => s + p.precio, 0);
-  document.getElementById('carrito-count').textContent = seleccionVet.length;
-  document.getElementById('carrito-total').textContent = '€' + total.toFixed(2);
-  document.getElementById('carrito-lista').textContent = seleccionVet.length ? seleccionVet.map(p => p.nombre).join(', ') : '';
-  box.style.display = seleccionVet.length ? 'block' : 'none';
-  document.getElementById('boton-vet-confirmar').disabled = seleccionVet.length === 0;
-}
-
-async function confirmarVet() {
-  if (!sesionActual || seleccionVet.length === 0) return;
-  try {
-    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, productos_ids: seleccionVet.map(p => p.id) });
     mostrarPantalla('pantalla-exito');
     setTimeout(() => location.reload(), 5000);
   } catch (err) { toast(err.message); }
