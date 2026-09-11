@@ -86,8 +86,14 @@ function check(nombre, cond, detalle) {
   check('Encuesta farmacia registrada', v3.status === 201, v3);
   const v3incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e3', respuesta1: ['Botiquín del hogar'] });
   check('Rechaza farmacia incompleta', v3incompleta.status === 400, v3incompleta);
-  const v4 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e4', combustible_id: comb.data[1].id });
-  check('Tanqueo registrado', v4.status === 201 && v4.data.monto, v4);
+  const v4 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e4', respuesta1: 'Sí', respuesta2: 'Grooming' });
+  check('Encuesta veterinaria registrada', v4.status === 201, v4);
+  const v4incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e4', respuesta1: 'Sí' });
+  check('Rechaza veterinaria sin motivo', v4incompleta.status === 400, v4incompleta);
+  const v5 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e5', respuesta1: 'Sí', respuesta2: 'SUV', respuesta3: 'Más de ₡30.000' });
+  check('Encuesta gasolina registrada', v5.status === 201, v5);
+  const v5incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e5', respuesta1: 'Sí', respuesta2: 'Moto' });
+  check('Rechaza gasolina sin gasto', v5incompleta.status === 400, v5incompleta);
   const dupE1 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1', plato_id: plato.id });
   check('Rechaza almuerzo repetido en Tótem 1', dupE1.status === 409, dupE1);
   const dupE2 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e2' });
@@ -96,7 +102,7 @@ function check(nombre, cond, detalle) {
   check('Rechaza estación repetida', dup.status === 409, dup);
 
   const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id });
-  check('Puntos acumulados > 0', trasVisitas.data.puntos === 310, trasVisitas.data);
+  check('Puntos acumulados > 0', trasVisitas.data.puntos === 430, trasVisitas.data);
 
   console.log('--- 6. Finalización y premio (protegida con PIN) ---');
   const sinPin = await fetch(BASE + '/finalizar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sesion_id: sesionId }) });

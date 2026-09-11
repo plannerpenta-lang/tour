@@ -49,22 +49,58 @@
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-menu')">Elegir otro</button>
 </div>
 
-<div id="pantalla-combustible" class="screen">
-  <div class="avatar-hero" id="comb-avatar" style="font-size:50px"></div>
-  <h1 id="comb-saludo"></h1>
-  <p class="subtitulo">Tanquea tu vehículo — Selecciona el monto</p>
-  <div id="grid-combustible" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; width:min(700px,94vw)"></div>
+<div id="pantalla-mascotas1" class="screen">
+  <div class="avatar-hero" id="vet-avatar" style="font-size:50px"></div>
+  <h1 id="vet-saludo"></h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Tienes mascotas en el hogar?</p>
+  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
+    <button class="boton grande" style="width:100%" onclick="responderVet1('Sí')">Sí</button>
+    <button class="boton grande" style="width:100%" onclick="responderVet1('No')">No</button>
+  </div>
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
 </div>
 
-<div id="pantalla-comb-confirmar" class="screen">
-  <h1 id="confirmar-comb-etiqueta"></h1>
-  <p class="subtitulo" id="confirmar-comb-desc"></p>
-  <button class="boton grande" onclick="confirmarComb()">✓ Confirmar</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-combustible')">Elegir otro</button>
+<div id="pantalla-mascotas2" class="screen">
+  <h1>Segunda pregunta</h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Por qué visitas normalmente la veterinaria?</p>
+  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
+    <button class="boton grande" style="width:100%" onclick="responderVet2('Compra de alimentos')">Compra de alimentos</button>
+    <button class="boton grande" style="width:100%" onclick="responderVet2('Citas de control')">Citas de control</button>
+    <button class="boton grande" style="width:100%" onclick="responderVet2('Grooming')">Grooming</button>
+  </div>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-mascotas1')">Volver ←</button>
 </div>
 
-<div id="pantalla-despensa" class="screen">
+<div id="pantalla-vehiculos1" class="screen">
+  <div class="avatar-hero" id="gas-avatar" style="font-size:50px"></div>
+  <h1 id="gas-saludo"></h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Tienes vehículos en tu hogar?</p>
+  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
+    <button class="boton grande" style="width:100%" onclick="responderGas1('Sí')">Sí</button>
+    <button class="boton grande" style="width:100%" onclick="responderGas1('No')">No</button>
+  </div>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+</div>
+
+<div id="pantalla-vehiculos2" class="screen">
+  <h1>Segunda pregunta</h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Qué tipo de vehículo tienes?</p>
+  <div id="grid-gas-tipos" style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)"></div>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-vehiculos1')">Volver ←</button>
+</div>
+
+<div id="pantalla-vehiculos3" class="screen">
+  <h1>Tercera pregunta</h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">En un mes, ¿cuánto gastas aproximadamente en combustible?</p>
+  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
+    <button class="boton grande" style="width:100%" onclick="responderGas3('₡0 – ₡20.000')">₡0 – ₡20.000</button>
+    <button class="boton grande" style="width:100%" onclick="responderGas3('₡20.001 – ₡30.000')">₡20.001 – ₡30.000</button>
+    <button class="boton grande" style="width:100%" onclick="responderGas3('Más de ₡30.000')">Más de ₡30.000</button>
+  </div>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-vehiculos2')">Volver ←</button>
+</div>
+
+<div id="pantalla-exito" class="screen">
   <div class="avatar-hero" id="desp-avatar" style="font-size:50px"></div>
   <h1 id="desp-saludo"></h1>
   <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Cuáles de estos productos normalmente forman parte de tu alacena?</p>
@@ -89,22 +125,6 @@
   <p class="subtitulo" style="font-size:22px; color:var(--text)">En un mes, ¿cuánto gastas aproximadamente en farmacia?</p>
   <div id="grid-farm2" style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)"></div>
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-farm1')">Volver ←</button>
-</div>
-
-<div id="pantalla-vet" class="screen">
-  <div class="avatar-hero" id="vet-avatar" style="font-size:50px"></div>
-  <h1 id="vet-saludo"></h1>
-  <p class="subtitulo">Compra en veterinaria — Selecciona lo que deseas</p>
-  <div id="grid-productos" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
-  <div id="carrito-vet" style="background:var(--card); border-radius:16px; padding:16px; width:min(900px,94vw); margin-top:16px; display:none">
-    <div style="display:flex; justify-content:space-between; align-items:center">
-      <b>Carrito (<span id="carrito-count">0</span>)</b>
-      <span id="carrito-total" style="color:var(--accent2); font-weight:800">€0.00</span>
-    </div>
-    <div id="carrito-lista" style="color:var(--muted); font-size:14px; margin-top:8px"></div>
-  </div>
-  <button class="boton grande" id="boton-vet-confirmar" onclick="confirmarVet()" style="margin-top:16px" disabled>✓ Confirmar compra</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
 </div>
 
 <div id="pantalla-exito" class="screen">
@@ -190,10 +210,13 @@ async function identificar(p) {
       cargarFarm1();
       mostrarPantalla('pantalla-farm1');
     } else if (CODIGO === 'e4') {
-      document.getElementById('comb-avatar').textContent = sesionActual.avatar;
-      document.getElementById('comb-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
-      await cargarCombustible();
-      mostrarPantalla('pantalla-combustible');
+      document.getElementById('vet-avatar').textContent = sesionActual.avatar;
+      document.getElementById('vet-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
+      mostrarPantalla('pantalla-mascotas1');
+    } else if (CODIGO === 'e5') {
+      document.getElementById('gas-avatar').textContent = sesionActual.avatar;
+      document.getElementById('gas-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
+      mostrarPantalla('pantalla-vehiculos1');
     } else {
       document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
       document.getElementById('sesion-usuario').textContent = sesionActual.usuario.split(' ')[0];
@@ -396,6 +419,63 @@ async function confirmarFarm(rango) {
 }
 
 let seleccionVet = [];
+let tipoVehiculo = null;
+const TIPOS_VEHICULO = ['Automóvil', 'SUV', 'Moto', '4x4', 'Otro'];
+
+async function responderVet1(tiene) {
+  if (!sesionActual) return;
+  if (tiene === 'No') {
+    try {
+      await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'No' });
+      mostrarPantalla('pantalla-exito');
+      setTimeout(() => location.reload(), 5000);
+    } catch (err) { toast(err.message); }
+  } else {
+    mostrarPantalla('pantalla-mascotas2');
+  }
+}
+
+async function responderVet2(motivo) {
+  if (!sesionActual) return;
+  try {
+    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'Sí', respuesta2: motivo });
+    mostrarPantalla('pantalla-exito');
+    setTimeout(() => location.reload(), 5000);
+  } catch (err) { toast(err.message); }
+}
+
+async function responderGas1(tiene) {
+  if (!sesionActual) return;
+  if (tiene === 'No') {
+    try {
+      await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'No' });
+      mostrarPantalla('pantalla-exito');
+      setTimeout(() => location.reload(), 5000);
+    } catch (err) { toast(err.message); }
+  } else {
+    tipoVehiculo = null;
+    const grid = document.getElementById('grid-gas-tipos');
+    grid.innerHTML = '';
+    TIPOS_VEHICULO.forEach(t => {
+      const b = document.createElement('button');
+      b.className = 'boton grande';
+      b.style.width = '100%';
+      b.textContent = t;
+      b.onclick = () => { tipoVehiculo = t; mostrarPantalla('pantalla-vehiculos3'); };
+      grid.appendChild(b);
+    });
+    mostrarPantalla('pantalla-vehiculos2');
+  }
+}
+
+async function responderGas3(gasto) {
+  if (!sesionActual || !tipoVehiculo) return;
+  try {
+    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'Sí', respuesta2: tipoVehiculo, respuesta3: gasto });
+    mostrarPantalla('pantalla-exito');
+    setTimeout(() => location.reload(), 5000);
+  } catch (err) { toast(err.message); }
+}
 
 async function cargarVet() {
   seleccionVet = [];

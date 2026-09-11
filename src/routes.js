@@ -133,6 +133,49 @@ router.post('/visitas', (req, res) => {
   let puntosFinal = puntos ?? estacion.puntos;
   let detalle = null;
 
+  if (estacion_codigo === 'e4' && req.body.respuesta1) {
+    const r1 = String(req.body.respuesta1).trim();
+    const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';
+    if (r1 !== 'Sí' && r1 !== 'No') return res.status(400).json({ error: 'Responde la primera pregunta' });
+    if (r1 === 'Sí' && !r2) return res.status(400).json({ error: 'Responde la segunda pregunta' });
+    db.exec('BEGIN');
+    try {
+      puntosFinal = estacion.puntos;
+      detalle = r1 === 'Sí' ? `Mascotas: Sí | Motivo: ${r2}` : 'Mascotas: No';
+      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
+        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
+      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
+      db.exec('COMMIT');
+      return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
+    } catch (e) {
+      db.exec('ROLLBACK');
+      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
+      return res.status(e.status || 500).json({ error: e.message });
+    }
+  }
+
+  if (estacion_codigo === 'e5' && req.body.respuesta1) {
+    const r1 = String(req.body.respuesta1).trim();
+    const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';
+    const r3 = req.body.respuesta3 ? String(req.body.respuesta3).trim() : '';
+    if (r1 !== 'Sí' && r1 !== 'No') return res.status(400).json({ error: 'Responde la primera pregunta' });
+    if (r1 === 'Sí' && (!r2 || !r3)) return res.status(400).json({ error: 'Completa todas las preguntas' });
+    db.exec('BEGIN');
+    try {
+      puntosFinal = estacion.puntos;
+      detalle = r1 === 'Sí' ? `Vehículos: Sí | Tipo: ${r2} | Gasto: ${r3}` : 'Vehículos: No';
+      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
+        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
+      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
+      db.exec('COMMIT');
+      return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
+    } catch (e) {
+      db.exec('ROLLBACK');
+      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
+      return res.status(e.status || 500).json({ error: e.message });
+    }
+  }
+
   if (estacion_codigo === 'e4' && req.body.combustible_id) {
     db.exec('BEGIN');
     try {
