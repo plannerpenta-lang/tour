@@ -76,7 +76,7 @@ router.post('/sesiones', (req, res) => {
 
 // El totem identifica al usuario por su personaje
 router.post('/totem/login', (req, res) => {
-  const { personaje_id, estacion_codigo } = req.body || {};
+  const { personaje_id } = req.body || {};
   const fila = db.prepare(`
     SELECT s.id AS sesion_id, s.estado, u.nombre AS usuario, p.nombre AS personaje, p.avatar,
            COALESCE((SELECT SUM(puntos) FROM visitas WHERE sesion_id = s.id), 0) AS puntos
@@ -88,13 +88,7 @@ router.post('/totem/login', (req, res) => {
 
   if (!fila) return res.status(404).json({ error: 'Este personaje no tiene un recorrido activo' });
 
-  const t = ahora();
-  if (estacion_codigo) {
-    db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(t, estacion_codigo, fila.sesion_id);
-  } else {
-    db.prepare('UPDATE sesiones SET ultima_actividad_en = ? WHERE id = ?').run(t, fila.sesion_id);
-    emitir(req.app.get('io'), 'actualizacion', { tipo: 'actividad', sesion_id: fila.sesion_id });
-  }
+  db.prepare('UPDATE sesiones SET ultima_actividad_en = ? WHERE id = ?').run(ahora(), fila.sesion_id);
   fila.visitadas = db.prepare(`
     SELECT e.codigo, e.nombre, v.puntos, v.timestamp, v.detalle
     FROM visitas v JOIN estaciones e ON e.id = v.estacion_id
@@ -133,7 +127,7 @@ router.post('/visitas', (req, res) => {
       detalle = plato.nombre;
       const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
-      db.prepare('UPDATE sesiones SET ultima_actividad_en = ? WHERE id = ?').run(ahora(), sesion_id);
+      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
       db.exec('COMMIT');
       const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, plato: plato.nombre, puntos: puntosFinal };
       emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre, plato: plato.nombre });
@@ -148,7 +142,7 @@ router.post('/visitas', (req, res) => {
   try {
     const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
       .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
-    db.prepare('UPDATE sesiones SET ultima_actividad_en = ? WHERE id = ?').run(ahora(), sesion_id);
+    db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
     const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal };
     emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
     res.status(201).json(visita);

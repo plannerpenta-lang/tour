@@ -53,21 +53,24 @@ function check(nombre, cond, detalle) {
   const login = await api('POST', '/totem/login', { personaje_id: zorro.id, estacion_codigo: 'e1' });
   check('Tótem identifica al usuario', login.status === 200 && login.data.usuario === 'Ana Pérez', login);
   check('No expone el teléfono', login.data.telefono === undefined, login.data);
-  const trasVisitas0 = await api('POST', '/totem/login', { personaje_id: zorro.id, estacion_codigo: 'e1' });
+  const trasVisitas0 = await api('POST', '/totem/login', { personaje_id: zorro.id });
   check('Puntos iniciales = 0', trasVisitas0.data.puntos === 0, trasVisitas0.data);
+  check('Ubicación no avanza solo al identificarse', (await api('GET', '/personajes?estado=en_tour&ubicacion=registro')).data.some(p => p.nombre === 'Zorro'), null);
   console.log('--- 4b. Menú Tótem 1 ---');
   const menu = await api('GET', '/menu');
   check('Menú tiene 8 platos', menu.data.length === 8 && menu.data[0].stock > 0, menu);
   const plato = menu.data[0];
   check('Plato tiene stock y puntos', plato.puntos > 0 && plato.stock_inicial > 0, plato);
-  const enRegistroTrasE1 = await api('GET', '/personajes?estado=en_tour&ubicacion=registro');
-  check('Ya no aparece en Estación 1 (avanzó)', !enRegistroTrasE1.data.some(p => p.nombre === 'Zorro'), null);
-  const enE2trasE1 = await api('GET', '/personajes?estado=en_tour&ubicacion=e1');
-  check('Ahora aparece en Estación 2', enE2trasE1.data.some(p => p.nombre === 'Zorro'), null);
+  const enRegistroTrasLogin = await api('GET', '/personajes?estado=en_tour&ubicacion=registro');
+  check('Sigue en registro si no confirma (recarga lo muestra de nuevo)', enRegistroTrasLogin.data.some(p => p.nombre === 'Zorro'), null);
 
   console.log('--- 5. Visitas (Tótem 1 con almuerzo + resto) ---');
   const v1 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1', plato_id: plato.id });
   check('Almuerzo registrado en Tótem 1', v1.status === 201 && v1.data.plato === plato.nombre, v1);
+  const enRegistroTrasVisita = await api('GET', '/personajes?estado=en_tour&ubicacion=registro');
+  check('Ya no aparece en Tótem 1 tras confirmar', !enRegistroTrasVisita.data.some(p => p.nombre === 'Zorro'), null);
+  const enE2trasVisita = await api('GET', '/personajes?estado=en_tour&ubicacion=e1');
+  check('Ahora aparece en Tótem 2', enE2trasVisita.data.some(p => p.nombre === 'Zorro'), null);
   for (const cod of ['e2', 'e3', 'e4']) {
     const v = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: cod });
     check(`Visita ${cod} registrada`, v.status === 201, v);
@@ -108,7 +111,7 @@ function check(nombre, cond, detalle) {
 
   console.log('--- 10. Dashboard protegido + historial + export CSV + config ---');
   const ses3 = await api('POST', '/sesiones', { usuario_id: reg.data.id, personaje_id: zorro.id });
-  await api('POST', '/totem/login', { personaje_id: zorro.id, estacion_codigo: 'e1' });
+  await api('POST', '/visitas', { sesion_id: ses3.data.id, estacion_codigo: 'e1', plato_id: (await api('GET', '/menu')).data[0].id });
   const dashSinPin = await fetch(BASE + '/dashboard');
   check('Dashboard rechaza sin PIN', dashSinPin.status === 401, { status: dashSinPin.status });
   const dash = await api('GET', '/dashboard', undefined, '1234');

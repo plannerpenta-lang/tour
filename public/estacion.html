@@ -23,9 +23,8 @@
 <div id="pantalla-sesion" class="screen">
   <div class="avatar-hero" id="sesion-avatar"></div>
   <h1>¡Hola, <span id="sesion-usuario"></span>!</h1>
-  <p class="subtitulo">Has acumulado <b style="color:var(--accent2)" id="sesion-puntos">0</b> puntos ·
-     <span id="sesion-progreso"></span></p>
-  <button class="boton grande" id="boton-visita" onclick="registrarVisita()">✓ Registrar mi visita aquí</button>
+  <p class="subtitulo"><span id="sesion-progreso"></span></p>
+  <button class="boton grande" id="boton-visita" onclick="registrarVisita()">✓ Confirmar</button>
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
   <button class="boton secundario" style="margin-top:10px; width:min(480px,90vw); font-size:15px; opacity:.7"
     onclick="liberarSesion(sesionActual.sesion_id ?? sesionActual.id, '¿Salir del tour? Tu personaje quedará libre para otros usuarios.')">
@@ -104,12 +103,11 @@ async function cargarPersonajes() {
 
 async function identificar(p) {
   try {
-    sesionActual = await api('POST', '/totem/login', { personaje_id: p.id, estacion_codigo: CODIGO });
+    sesionActual = await api('POST', '/totem/login', { personaje_id: p.id });
     const yaVisito = sesionActual.visitadas.some(v => v.codigo === CODIGO);
     if (yaVisito) {
       document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
       document.getElementById('sesion-usuario').textContent = sesionActual.usuario.split(' ')[0];
-      document.getElementById('sesion-puntos').textContent = sesionActual.puntos;
       document.getElementById('sesion-progreso').textContent =
         `${sesionActual.visitadas.length} de ${totalEstaciones} estaciones completadas`;
       const boton = document.getElementById('boton-visita');
@@ -126,11 +124,10 @@ async function identificar(p) {
     } else {
       document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
       document.getElementById('sesion-usuario').textContent = sesionActual.usuario.split(' ')[0];
-      document.getElementById('sesion-puntos').textContent = sesionActual.puntos;
       document.getElementById('sesion-progreso').textContent =
         `${sesionActual.visitadas.length} de ${totalEstaciones} estaciones completadas`;
       const boton = document.getElementById('boton-visita');
-      boton.textContent = `✓ Registrar mi visita aquí (+${estacion.puntos})`;
+      boton.textContent = `✓ Confirmar`;
       boton.disabled = false;
       mostrarPantalla('pantalla-sesion');
     }
@@ -154,7 +151,7 @@ async function cargarMenu() {
       card.innerHTML = `<span style="font-size:42px">${plato.emoji}</span>
         <span style="font-weight:800; font-size:16px">${plato.nombre}</span>
         <span style="color:var(--muted); font-size:13px">${plato.descripcion}</span>
-        <span style="color:${agotado ? 'var(--err)' : 'var(--accent2)'}; font-size:14px; font-weight:700">${agotado ? 'AGOTADO' : '+' + plato.puntos + ' pts · quedan ' + plato.stock}</span>`;
+        <span style="color:${agotado ? 'var(--err)' : 'var(--muted)'}; font-size:14px; font-weight:700">${agotado ? 'AGOTADO' : 'Quedan ' + plato.stock + ' disponibles'}</span>`;
       if (!agotado) card.onclick = () => elegirPlato(plato);
       grid.appendChild(card);
     }
@@ -166,7 +163,7 @@ function elegirPlato(plato) {
   document.getElementById('confirmar-emoji').textContent = plato.emoji;
   document.getElementById('confirmar-plato').textContent = plato.nombre;
   document.getElementById('confirmar-desc').textContent = plato.descripcion;
-  document.getElementById('confirmar-puntos').textContent = `+${plato.puntos} puntos · quedan ${plato.stock} disponibles`;
+  document.getElementById('confirmar-puntos').textContent = `Quedan ${plato.stock} disponibles`;
   mostrarPantalla('pantalla-menu-confirmar');
 }
 

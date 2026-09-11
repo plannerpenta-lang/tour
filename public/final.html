@@ -22,7 +22,7 @@
 <div id="pantalla-resumen" class="screen">
   <div class="avatar-hero" id="resumen-avatar"></div>
   <h1>¡Felicidades, <span id="resumen-usuario"></span>!</h1>
-  <p class="subtitulo">Completaste el tour con <b style="color:var(--accent2)" id="resumen-puntos">0</b> puntos</p>
+  <p class="subtitulo">¡Completaste el tour!</p>
   <button class="boton grande celebrando" onclick="mostrarPantalla('pantalla-pin')">🎁 Recibir mi premio</button>
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">Volver ←</button>
 </div>
@@ -82,10 +82,9 @@ async function cargarPersonajes() {
 
 async function identificar(p) {
   try {
-    sesionActual = await api('POST', '/totem/login', { personaje_id: p.id, estacion_codigo: 'final' });
+    sesionActual = await api('POST', '/totem/login', { personaje_id: p.id });
     document.getElementById('resumen-avatar').textContent = sesionActual.avatar;
     document.getElementById('resumen-usuario').textContent = sesionActual.usuario.split(' ')[0];
-    document.getElementById('resumen-puntos').textContent = sesionActual.puntos;
     mostrarPantalla('pantalla-resumen');
   } catch (err) { toast(err.message); await cargarPersonajes(); }
 }
