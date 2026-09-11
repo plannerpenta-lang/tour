@@ -92,6 +92,23 @@ function seed() {
     ins.run(15000, '₡15.000', '3/4 tanque', '⛽', 130);
     console.log('Combustible creado');
   }
+
+  const desp = db.prepare('SELECT COUNT(*) AS n FROM despensa').get();
+  if (desp.n === 0) {
+    const ins = db.prepare('INSERT INTO despensa (nombre, emoji, puntos) VALUES (?, ?, ?)');
+    ins.run('Arroz', '🍚', 10);
+    ins.run('Frijoles', '🫘', 10);
+    ins.run('Aceite de oliva', '🫒', 10);
+    ins.run('Atún', '🐟', 10);
+    ins.run('Aderezos', '🥫', 10);
+    ins.run('Lentejas', '🥘', 10);
+    ins.run('Miel de maple', '🍯', 10);
+    ins.run('Té', '🍵', 10);
+    ins.run('Sopas instantáneas', '🍜', 10);
+    ins.run('Sal del Himalaya', '🧂', 10);
+    ins.run('Azúcar', '🍬', 10);
+    console.log('Despensa creada');
+  }
 }
 
 seed();

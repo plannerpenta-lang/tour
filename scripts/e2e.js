@@ -74,14 +74,14 @@ function check(nombre, cond, detalle) {
   check('Ya no aparece en Tótem 1 tras confirmar', !enRegistroTrasVisita.data.some(p => p.nombre === 'Zorro'), null);
   const enE2trasVisita = await api('GET', '/personajes?estado=en_tour&ubicacion=e1');
   check('Ahora aparece en Tótem 2', enE2trasVisita.data.some(p => p.nombre === 'Zorro'), null);
-  const prods = await api('GET', '/productos?estacion=e2');
-  check('Productos farmacia cargados', prods.data.length === 8 && prods.data[0].estacion === 'e2', prods);
+  const desp = await api('GET', '/despensa');
+  check('Productos de alacena cargados', desp.data.length === 11, desp);
+  const v2 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e2', despensa_ids: [desp.data[0].id, desp.data[1].id, desp.data[2].id] });
+  check('Selección de alacena registrada', v2.status === 201 && v2.data.productos.length === 3, v2);
   const prodsVet = await api('GET', '/productos?estacion=e3');
   check('Productos veterinaria cargados', prodsVet.data.length === 8 && prodsVet.data[0].estacion === 'e3', prodsVet);
   const comb = await api('GET', '/combustible');
   check('Montos combustible cargados', comb.data.length === 5 && comb.data[0].monto === 5000, comb);
-  const v2 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e2', productos_ids: [prods.data[0].id, prods.data[1].id] });
-  check('Compra farmacia registrada', v2.status === 201 && v2.data.productos, v2);
   const v3 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e3', productos_ids: [prodsVet.data[0].id] });
   check('Compra veterinaria registrada', v3.status === 201, v3);
   const v4 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e4', combustible_id: comb.data[1].id });
@@ -94,7 +94,7 @@ function check(nombre, cond, detalle) {
   check('Rechaza estación repetida', dup.status === 409, dup);
 
   const trasVisitas = await api('POST', '/totem/login', { personaje_id: zorro.id });
-  check('Puntos acumulados > 0', trasVisitas.data.puntos > 400, trasVisitas.data);
+  check('Puntos acumulados > 0', trasVisitas.data.puntos === 310, trasVisitas.data);
 
   console.log('--- 6. Finalización y premio (protegida con PIN) ---');
   const sinPin = await fetch(BASE + '/finalizar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sesion_id: sesionId }) });

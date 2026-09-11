@@ -116,6 +116,10 @@ router.get('/combustible', (req, res) => {
   res.json(db.prepare('SELECT * FROM combustible ORDER BY monto').all());
 });
 
+router.get('/despensa', (req, res) => {
+  res.json(db.prepare('SELECT * FROM despensa ORDER BY id').all());
+});
+
 // ---- Visitas a estaciones ----
 
 router.post('/visitas', (req, res) => {
@@ -148,7 +152,29 @@ router.post('/visitas', (req, res) => {
     }
   }
 
-  if ((estacion_codigo === 'e2' || estacion_codigo === 'e3') && req.body.productos_ids) {
+  if (estacion_codigo === 'e2' && req.body.despensa_ids) {
+    const ids = req.body.despensa_ids;
+    if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'Selecciona al menos un producto' });
+    db.exec('BEGIN');
+    try {
+      const placeholders = ids.map(() => '?').join(',');
+      const items = db.prepare(`SELECT * FROM despensa WHERE id IN (${placeholders})`).all(...ids);
+      if (items.length !== ids.length) throw Object.assign(new Error('Producto no encontrado'), { status: 404 });
+      puntosFinal = items.reduce((s, p) => s + p.puntos, 0);
+      detalle = items.map(p => p.nombre).join(', ');
+      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
+        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
+      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
+      db.exec('COMMIT');
+      return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, productos: items.map(p => p.nombre), puntos: puntosFinal });
+    } catch (e) {
+      db.exec('ROLLBACK');
+      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
+      return res.status(e.status || 500).json({ error: e.message });
+    }
+  }
+
+  if (estacion_codigo === 'e3' && req.body.productos_ids) {
     const ids = req.body.productos_ids;
     if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'Selecciona al menos un producto' });
     db.exec('BEGIN');

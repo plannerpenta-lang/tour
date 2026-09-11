@@ -98,6 +98,13 @@ CREATE TABLE IF NOT EXISTS combustible (
   emoji TEXT NOT NULL DEFAULT '⛽',
   puntos INTEGER NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS despensa (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  emoji TEXT NOT NULL,
+  puntos INTEGER NOT NULL
+);
 `);
 
 try { db.exec("ALTER TABLE sesiones ADD COLUMN ubicacion TEXT"); } catch (_) {}

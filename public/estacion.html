@@ -64,6 +64,16 @@
   <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-combustible')">Elegir otro</button>
 </div>
 
+<div id="pantalla-despensa" class="screen">
+  <div class="avatar-hero" id="desp-avatar" style="font-size:50px"></div>
+  <h1 id="desp-saludo"></h1>
+  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Cuáles de estos productos normalmente forman parte de tu alacena?</p>
+  <div id="grid-despensa" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
+  <p style="color:var(--muted); margin-top:14px" id="desp-count"></p>
+  <button class="boton grande" id="boton-desp-confirmar" onclick="confirmarDesp()" style="margin-top:10px" disabled>Confirmar</button>
+  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">No soy yo ←</button>
+</div>
+
 <div id="pantalla-vet" class="screen">
   <div class="avatar-hero" id="vet-avatar" style="font-size:50px"></div>
   <h1 id="vet-saludo"></h1>
@@ -152,7 +162,12 @@ async function identificar(p) {
       document.getElementById('menu-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       await cargarMenu();
       mostrarPantalla('pantalla-menu');
-    } else if (CODIGO === 'e2' || CODIGO === 'e3') {
+    } else if (CODIGO === 'e2') {
+      document.getElementById('desp-avatar').textContent = sesionActual.avatar;
+      document.getElementById('desp-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
+      await cargarDesp();
+      mostrarPantalla('pantalla-despensa');
+    } else if (CODIGO === 'e3') {
       document.getElementById('vet-avatar').textContent = sesionActual.avatar;
       document.getElementById('vet-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       await cargarVet();
@@ -250,13 +265,56 @@ async function confirmarComb() {
   } catch (err) { toast(err.message); }
 }
 
+let seleccionDesp = [];
+
+async function cargarDesp() {
+  seleccionDesp = [];
+  actualizarDesp();
+  const grid = document.getElementById('grid-despensa');
+  grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Cargando productos…</p>';
+  try {
+    const items = await api('GET', '/despensa');
+    grid.innerHTML = '';
+    for (const it of items) {
+      const card = document.createElement('div');
+      card.className = 'personaje-card';
+      card.id = 'desp-card-' + it.id;
+      card.innerHTML = `<span style="font-size:42px">${it.emoji}</span>
+        <span style="font-weight:800; font-size:16px">${it.nombre}</span>`;
+      card.onclick = () => toggleDesp(it);
+      grid.appendChild(card);
+    }
+  } catch { grid.innerHTML = '<p class="cargando">Error cargando productos</p>'; }
+}
+
+function toggleDesp(it) {
+  const idx = seleccionDesp.findIndex(x => x.id === it.id);
+  const card = document.getElementById('desp-card-' + it.id);
+  if (idx >= 0) { seleccionDesp.splice(idx, 1); card.style.borderColor = 'transparent'; card.style.background = 'var(--card)'; }
+  else { seleccionDesp.push(it); card.style.borderColor = 'var(--accent2)'; card.style.background = 'var(--card-hover)'; }
+  actualizarDesp();
+}
+
+function actualizarDesp() {
+  document.getElementById('desp-count').textContent = seleccionDesp.length ? `${seleccionDesp.length} seleccionado(s)` : 'Toca los productos para seleccionarlos';
+  document.getElementById('boton-desp-confirmar').disabled = seleccionDesp.length === 0;
+}
+
+async function confirmarDesp() {
+  if (!sesionActual || seleccionDesp.length === 0) return;
+  try {
+    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, despensa_ids: seleccionDesp.map(p => p.id) });
+    mostrarPantalla('pantalla-exito');
+    setTimeout(() => location.reload(), 5000);
+  } catch (err) { toast(err.message); }
+}
+
 let seleccionVet = [];
 
 async function cargarVet() {
   seleccionVet = [];
   actualizarCarrito();
-  const esFarmacia = CODIGO === 'e2';
-  document.querySelector('#pantalla-vet .subtitulo').textContent = esFarmacia ? 'Compra en farmacia — Selecciona lo que deseas' : 'Compra en veterinaria — Selecciona lo que deseas';
+  document.querySelector('#pantalla-vet .subtitulo').textContent = 'Compra en veterinaria — Selecciona lo que deseas';
   const grid = document.getElementById('grid-productos');
   grid.innerHTML = '<p class="cargando" style="grid-column:1/-1;text-align:center">Cargando productos…</p>';
   try {
