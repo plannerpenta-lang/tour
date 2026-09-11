@@ -68,9 +68,20 @@ CREATE TABLE IF NOT EXISTS premios (
   estado TEXT NOT NULL DEFAULT 'disponible' CHECK (estado IN ('disponible','entregado')),
   sesion_id INTEGER REFERENCES sesiones(id)
 );
+
+CREATE TABLE IF NOT EXISTS platos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  nombre TEXT NOT NULL,
+  descripcion TEXT,
+  emoji TEXT NOT NULL,
+  puntos INTEGER NOT NULL,
+  stock INTEGER NOT NULL,
+  stock_inicial INTEGER NOT NULL
+);
 `);
 
 try { db.exec("ALTER TABLE sesiones ADD COLUMN ubicacion TEXT"); } catch (_) {}
+try { db.exec("ALTER TABLE visitas ADD COLUMN detalle TEXT"); } catch (_) {}
 
 function ahora() {
   return new Date().toISOString();

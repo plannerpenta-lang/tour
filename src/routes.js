@@ -96,28 +96,60 @@ router.post('/totem/login', (req, res) => {
     emitir(req.app.get('io'), 'actualizacion', { tipo: 'actividad', sesion_id: fila.sesion_id });
   }
   fila.visitadas = db.prepare(`
-    SELECT e.codigo, e.nombre, v.puntos, v.timestamp
+    SELECT e.codigo, e.nombre, v.puntos, v.timestamp, v.detalle
     FROM visitas v JOIN estaciones e ON e.id = v.estacion_id
     WHERE v.sesion_id = ? ORDER BY e.orden
   `).all(fila.sesion_id);
   res.json(fila);
 });
 
+// ---- Menu Tótem 1 (almuerzos) ----
+
+router.get('/menu', (req, res) => {
+  res.json(db.prepare('SELECT * FROM platos ORDER BY id').all());
+});
+
 // ---- Visitas a estaciones ----
 
 router.post('/visitas', (req, res) => {
-  const { sesion_id, estacion_codigo, puntos } = req.body || {};
+  const { sesion_id, estacion_codigo, puntos, plato_id } = req.body || {};
   const sesion = db.prepare("SELECT * FROM sesiones WHERE id = ? AND estado = 'activa'").get(sesion_id);
   if (!sesion) return res.status(404).json({ error: 'Sesión activa no encontrada' });
 
   const estacion = db.prepare('SELECT * FROM estaciones WHERE codigo = ?').get(estacion_codigo);
   if (!estacion) return res.status(404).json({ error: 'Estación no encontrada' });
 
+  let puntosFinal = puntos ?? estacion.puntos;
+  let detalle = null;
+
+  if (estacion_codigo === 'e1' && plato_id) {
+    db.exec('BEGIN');
+    try {
+      const plato = db.prepare('SELECT * FROM platos WHERE id = ?').get(plato_id);
+      if (!plato) throw Object.assign(new Error('Plato no encontrado'), { status: 404 });
+      if (plato.stock <= 0) throw Object.assign(new Error('Este almuerzo se agotó'), { status: 409 });
+      db.prepare('UPDATE platos SET stock = stock - 1 WHERE id = ?').run(plato_id);
+      puntosFinal = plato.puntos;
+      detalle = plato.nombre;
+      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
+        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
+      db.prepare('UPDATE sesiones SET ultima_actividad_en = ? WHERE id = ?').run(ahora(), sesion_id);
+      db.exec('COMMIT');
+      const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, plato: plato.nombre, puntos: puntosFinal };
+      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre, plato: plato.nombre });
+      return res.status(201).json(visita);
+    } catch (e) {
+      db.exec('ROLLBACK');
+      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
+      return res.status(e.status || 500).json({ error: e.message });
+    }
+  }
+
   try {
-    const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp) VALUES (?, ?, ?, ?)')
-      .run(sesion_id, estacion.id, puntos ?? estacion.puntos, ahora());
+    const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
+      .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
     db.prepare('UPDATE sesiones SET ultima_actividad_en = ? WHERE id = ?').run(ahora(), sesion_id);
-    const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre };
+    const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal };
     emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
     res.status(201).json(visita);
   } catch (e) {
@@ -245,7 +277,7 @@ router.get('/historial', requerirPin, (req, res) => {
   `).all();
 
   const visitasStmt = db.prepare(`
-    SELECT e.nombre AS estacion, e.codigo, v.puntos, v.timestamp
+    SELECT e.nombre AS estacion, e.codigo, v.puntos, v.timestamp, v.detalle
     FROM visitas v JOIN estaciones e ON e.id = v.estacion_id
     WHERE v.sesion_id = ? ORDER BY e.orden
   `);

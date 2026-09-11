@@ -31,6 +31,20 @@ function seed() {
     }
     console.log('Premios creados');
   }
+
+  const platos = db.prepare('SELECT COUNT(*) AS n FROM platos').get();
+  if (platos.n === 0) {
+    const ins = db.prepare('INSERT INTO platos (nombre, descripcion, emoji, puntos, stock, stock_inicial) VALUES (?, ?, ?, ?, ?, ?)');
+    ins.run('Casado Típico', 'Arroz, frijoles, plátano, ensalada, chuleta', '🍛', 100, 15, 15);
+    ins.run('Arroz con Pollo', 'Arroz, pollo, verduras y papas', '🍗', 120, 12, 12);
+    ins.run('Olla de Carne', 'Carne, yuca, elote, verduras', '🍲', 150, 8, 8);
+    ins.run('Chifrijo', 'Arroz, frijoles, chicharrón, pico de gallo', '🥘', 100, 10, 10);
+    ins.run('Gallo Pinto Especial', 'Gallo pinto, huevo, natilla, tortilla', '🍳', 80, 20, 20);
+    ins.run('Sopa Negra', 'Frijoles, huevo, arroz y culantro', '🥣', 130, 10, 10);
+    ins.run('Arroz con Camarones', 'Arroz, camarones, verduras', '🦐', 150, 6, 6);
+    ins.run('Casado Vegetariano', 'Arroz, frijoles, vegetales, ensalada', '🥗', 110, 10, 10);
+    console.log('Platos creados');
+  }
 }
 
 seed();

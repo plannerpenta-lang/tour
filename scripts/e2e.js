@@ -55,16 +55,27 @@ function check(nombre, cond, detalle) {
   check('No expone el teléfono', login.data.telefono === undefined, login.data);
   const trasVisitas0 = await api('POST', '/totem/login', { personaje_id: zorro.id, estacion_codigo: 'e1' });
   check('Puntos iniciales = 0', trasVisitas0.data.puntos === 0, trasVisitas0.data);
+  console.log('--- 4b. Menú Tótem 1 ---');
+  const menu = await api('GET', '/menu');
+  check('Menú tiene 8 platos', menu.data.length === 8 && menu.data[0].stock > 0, menu);
+  const plato = menu.data[0];
+  check('Plato tiene stock y puntos', plato.puntos > 0 && plato.stock_inicial > 0, plato);
   const enRegistroTrasE1 = await api('GET', '/personajes?estado=en_tour&ubicacion=registro');
   check('Ya no aparece en Estación 1 (avanzó)', !enRegistroTrasE1.data.some(p => p.nombre === 'Zorro'), null);
   const enE2trasE1 = await api('GET', '/personajes?estado=en_tour&ubicacion=e1');
   check('Ahora aparece en Estación 2', enE2trasE1.data.some(p => p.nombre === 'Zorro'), null);
 
-  console.log('--- 5. Visitas a las 4 estaciones ---');
-  for (const cod of ['e1', 'e2', 'e3', 'e4']) {
+  console.log('--- 5. Visitas (Tótem 1 con almuerzo + resto) ---');
+  const v1 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1', plato_id: plato.id });
+  check('Almuerzo registrado en Tótem 1', v1.status === 201 && v1.data.plato === plato.nombre, v1);
+  for (const cod of ['e2', 'e3', 'e4']) {
     const v = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: cod });
     check(`Visita ${cod} registrada`, v.status === 201, v);
   }
+  const dupE1 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1', plato_id: plato.id });
+  check('Rechaza almuerzo repetido en Tótem 1', dupE1.status === 409, dupE1);
+  const dupE2 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e2' });
+  check('Rechaza estación repetida', dupE2.status === 409, dupE2);
   const dup = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1' });
   check('Rechaza estación repetida', dup.status === 409, dup);
 
