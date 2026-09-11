@@ -29,18 +29,21 @@ function check(nombre, cond, detalle) {
   const zorro = disp.data.find(p => p.nombre === 'Zorro');
 
   console.log('--- 2. Registro de usuario ---');
-  const reg = await api('POST', '/usuarios', { nombre: 'Ana Pérez', telefono: '3001234567', consentimiento: true });
+  const reg = await api('POST', '/usuarios', { nombre: 'Ana Pérez', cedula: '11001100', telefono: '3001234567', email: 'ana@example.com', consentimiento: true });
   check('Usuario creado', reg.status === 201 && reg.data.id > 0, reg);
 
-  const sinConsent = await api('POST', '/usuarios', { nombre: 'X', consentimiento: false });
+  const sinConsent = await api('POST', '/usuarios', { nombre: 'X', cedula: '1', telefono: '1', email: 'x@x.com', consentimiento: false });
   check('Rechaza sin consentimiento', sinConsent.status === 400, sinConsent);
+
+  const sinCedula = await api('POST', '/usuarios', { nombre: 'Y', telefono: '3000000000', email: 'y@y.com', consentimiento: true });
+  check('Rechaza sin cédula', sinCedula.status === 400, sinCedula);
 
   console.log('--- 3. Inicio de sesión con personaje (bloqueo) ---');
   const ses = await api('POST', '/sesiones', { usuario_id: reg.data.id, personaje_id: zorro.id });
   check('Sesión creada', ses.status === 201 && (ses.data.id > 0 || ses.data.sesion_id > 0), ses);
   const sesionId = ses.data.sesion_id ?? ses.data.id;
 
-  const otroUser = await api('POST', '/usuarios', { nombre: 'Beto Ruiz', telefono: '3109876543', consentimiento: true });
+  const otroUser = await api('POST', '/usuarios', { nombre: 'Beto Ruiz', cedula: '22002200', telefono: '3109876543', email: 'beto@example.com', consentimiento: true });
   const robo = await api('POST', '/sesiones', { usuario_id: otroUser.data.id, personaje_id: zorro.id });
   check('Rechaza personaje ya tomado', robo.status === 409, robo);
 

@@ -38,11 +38,14 @@ router.get('/personajes', (req, res) => {
 // ---- Registro de usuario ----
 
 router.post('/usuarios', (req, res) => {
-  const { nombre, telefono, email, consentimiento } = req.body || {};
-  if (!nombre || !nombre.trim()) return res.status(400).json({ error: 'El nombre es obligatorio' });
+  const { nombre, cedula, telefono, email, consentimiento } = req.body || {};
+  if (!nombre || !nombre.trim()) return res.status(400).json({ error: 'El nombre completo es obligatorio' });
+  if (!cedula || !String(cedula).trim()) return res.status(400).json({ error: 'La cédula es obligatoria' });
+  if (!telefono || !String(telefono).trim()) return res.status(400).json({ error: 'El teléfono es obligatorio' });
+  if (!email || !String(email).trim()) return res.status(400).json({ error: 'El correo electrónico es obligatorio' });
   if (!consentimiento) return res.status(400).json({ error: 'Se requiere el consentimiento de datos' });
-  const r = db.prepare('INSERT INTO usuarios (nombre, telefono, email, consentimiento, creado_en) VALUES (?, ?, ?, 1, ?)')
-    .run(nombre.trim(), telefono || null, email || null, ahora());
+  const r = db.prepare('INSERT INTO usuarios (nombre, cedula, telefono, email, consentimiento, creado_en) VALUES (?, ?, ?, ?, 1, ?)')
+    .run(nombre.trim(), String(cedula).trim(), String(telefono).trim(), String(email).trim(), ahora());
   res.status(201).json({ id: Number(r.lastInsertRowid), nombre: nombre.trim() });
 });
 
@@ -310,7 +313,7 @@ router.get('/dashboard', requerirPin, (req, res) => {
 
 router.get('/historial', requerirPin, (req, res) => {
   const filas = db.prepare(`
-    SELECT s.id AS sesion_id, u.nombre, u.telefono, u.email,
+    SELECT s.id AS sesion_id, u.nombre, u.cedula, u.telefono, u.email,
            p.avatar, p.nombre AS personaje,
            s.estado, s.ubicacion, s.iniciada_en, COALESCE(s.completada_en, '') AS completada_en,
            COALESCE((SELECT SUM(puntos) FROM visitas WHERE sesion_id = s.id), 0) AS puntos,
@@ -335,7 +338,7 @@ router.get('/historial', requerirPin, (req, res) => {
 
 router.get('/exportar.csv', requerirPin, (req, res) => {
   const filas = db.prepare(`
-    SELECT s.id, u.nombre, u.telefono, u.email, p.nombre AS personaje, s.estado,
+    SELECT s.id, u.nombre, u.cedula, u.telefono, u.email, p.nombre AS personaje, s.estado,
            s.iniciada_en, COALESCE(s.completada_en, '') AS completada_en,
            COALESCE((SELECT SUM(puntos) FROM visitas WHERE sesion_id = s.id), 0) AS puntos,
            COALESCE(s.premio, '') AS premio
@@ -346,8 +349,8 @@ router.get('/exportar.csv', requerirPin, (req, res) => {
   `).all();
 
   const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const lineas = ['id,nombre,telefono,email,personaje,estado,iniciada_en,completada_en,puntos,premio'];
-  for (const f of filas) lineas.push([f.id, f.nombre, f.telefono, f.email, f.personaje, f.estado, f.iniciada_en, f.completada_en, f.puntos, f.premio].map(esc).join(','));
+  const lineas = ['id,nombre,cedula,telefono,email,personaje,estado,iniciada_en,completada_en,puntos,premio'];
+  for (const f of filas) lineas.push([f.id, f.nombre, f.cedula, f.telefono, f.email, f.personaje, f.estado, f.iniciada_en, f.completada_en, f.puntos, f.premio].map(esc).join(','));
   res.set('Content-Type', 'text/csv; charset=utf-8');
   res.set('Content-Disposition', 'attachment; filename="tour-export.csv"');
   res.send('\ufeff' + lineas.join('\r\n'));

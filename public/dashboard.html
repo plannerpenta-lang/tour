@@ -209,7 +209,7 @@ function pintarHistorial() {
     return `<tr class="fila-historial" onclick="toggleDetalle(${h.sesion_id})">
         <td>▸</td>
         <td><b>${h.nombre}</b></td>
-        <td>${[h.telefono, h.email].filter(Boolean).join(' · ') || '—'}</td>
+        <td>${[h.cedula, h.telefono, h.email].filter(Boolean).join(' · ') || '—'}</td>
         <td>${h.avatar} ${h.personaje}</td>
         <td><span class="badge-estado estado-${h.estado}">${h.estado}</span></td>
         <td><b style="color:var(--accent2)">${h.puntos}</b></td>

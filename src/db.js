@@ -13,6 +13,7 @@ db.exec(`
 CREATE TABLE IF NOT EXISTS usuarios (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   nombre TEXT NOT NULL,
+  cedula TEXT,
   telefono TEXT,
   email TEXT,
   consentimiento INTEGER NOT NULL DEFAULT 0,
@@ -102,6 +103,7 @@ CREATE TABLE IF NOT EXISTS combustible (
 try { db.exec("ALTER TABLE sesiones ADD COLUMN ubicacion TEXT"); } catch (_) {}
 try { db.exec("ALTER TABLE visitas ADD COLUMN detalle TEXT"); } catch (_) {}
 try { db.exec("ALTER TABLE productos ADD COLUMN estacion TEXT NOT NULL DEFAULT 'e2'"); } catch (_) {}
+try { db.exec("ALTER TABLE usuarios ADD COLUMN cedula TEXT"); } catch (_) {}
 try { db.exec("DELETE FROM estaciones WHERE codigo = 'e6'"); db.exec("UPDATE estaciones SET orden = 6 WHERE codigo = 'final'"); } catch (_) {}
 
 function ahora() {

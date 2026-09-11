@@ -18,14 +18,15 @@
   <h1>¡Bienvenido!</h1>
   <p class="subtitulo">Regístrate y elige tu compañero de aventura</p>
   <form class="tarjeta-forma" id="forma-registro">
-    <input type="text" id="campo-nombre" placeholder="Tu nombre" autocomplete="off" required maxlength="60">
-    <input type="tel" id="campo-telefono" placeholder="Celular" autocomplete="off" required maxlength="20">
-    <input type="email" id="campo-email" placeholder="Correo (opcional)" autocomplete="off" maxlength="80">
+    <input type="text" id="campo-nombre" placeholder="Nombre completo" autocomplete="off" required maxlength="80">
+    <input type="text" id="campo-cedula" placeholder="Cédula" autocomplete="off" required maxlength="20" inputmode="numeric">
+    <input type="tel" id="campo-telefono" placeholder="Teléfono" autocomplete="off" required maxlength="20">
+    <input type="email" id="campo-email" placeholder="Correo electrónico" autocomplete="off" required maxlength="80">
     <label class="check-linea">
       <input type="checkbox" id="campo-consentimiento">
       <span>Autorizo el tratamiento de mis datos personales para participar en la experiencia.</span>
     </label>
-    <button type="submit" class="boton">Continuar →</button>
+    <button type="submit" class="boton">CONTINUAR</button>
   </form>
 </div>
 
@@ -61,13 +62,14 @@ let personajeElegido = null;
 document.getElementById('forma-registro').addEventListener('submit', async (e) => {
   e.preventDefault();
   const nombre = document.getElementById('campo-nombre').value.trim();
+  const cedula = document.getElementById('campo-cedula').value.trim();
   const telefono = document.getElementById('campo-telefono').value.trim();
   const email = document.getElementById('campo-email').value.trim();
   const consent = document.getElementById('campo-consentimiento').checked;
-  if (!nombre || !telefono) return toast('Completa nombre y celular');
+  if (!nombre || !cedula || !telefono || !email) return toast('Completa todos los datos');
   if (!consent) return toast('Debes autorizar el tratamiento de datos');
   try {
-    const u = await api('POST', '/usuarios', { nombre, telefono, email: email || null, consentimiento: true });
+    const u = await api('POST', '/usuarios', { nombre, cedula, telefono, email, consentimiento: true });
     usuarioId = u.id;
     await cargarPersonajes();
     mostrarPantalla('pantalla-personajes');
