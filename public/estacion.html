@@ -180,13 +180,25 @@ async function cargarPersonajes() {
     const enTour = await api('GET', `/personajes?estado=en_tour&ubicacion=${codigoAnterior}`);
     grid.innerHTML = '';
     if (enTour.length === 0) {
-      grid.innerHTML = `<p class="cargando" style="grid-column:1/-1;text-align:center">Nadie ha llegado desde<br><b>${anteriorNombre()}</b> todavía</p>`;
+      const msg = document.createElement('p');
+      msg.className = 'cargando';
+      msg.style.gridColumn = '1/-1';
+      msg.style.textAlign = 'center';
+      msg.textContent = `Nadie ha llegado desde ${anteriorNombre()} todavía`;
+      grid.appendChild(msg);
       return;
     }
     for (const p of enTour) {
       const card = document.createElement('div');
       card.className = 'personaje-card';
-      card.innerHTML = `<span class="personaje-emoji">${p.avatar}</span><span class="personaje-nombre">${p.nombre}</span>`;
+      const emoji = document.createElement('span');
+      emoji.className = 'personaje-emoji';
+      emoji.textContent = p.avatar;
+      const nombre = document.createElement('span');
+      nombre.className = 'personaje-nombre';
+      nombre.textContent = p.nombre;
+      card.appendChild(emoji);
+      card.appendChild(nombre);
       card.onclick = () => identificar(p);
       grid.appendChild(card);
     }
@@ -259,8 +271,15 @@ async function cargarDesp() {
       const card = document.createElement('div');
       card.className = 'personaje-card';
       card.id = 'desp-card-' + it.id;
-      card.innerHTML = `<span style="font-size:42px">${it.emoji}</span>
-        <span style="font-weight:800; font-size:16px">${it.nombre}</span>`;
+      const e1 = document.createElement('span');
+      e1.style.fontSize = '42px';
+      e1.textContent = it.emoji;
+      const n1 = document.createElement('span');
+      n1.style.fontWeight = '800';
+      n1.style.fontSize = '16px';
+      n1.textContent = it.nombre;
+      card.appendChild(e1);
+      card.appendChild(n1);
       card.onclick = () => toggleDesp(it);
       grid.appendChild(card);
     }

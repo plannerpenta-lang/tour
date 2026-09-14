@@ -8,6 +8,7 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const db = new DatabaseSync(path.join(DATA_DIR, 'tour.db'));
 db.exec('PRAGMA journal_mode = WAL');
 db.exec('PRAGMA foreign_keys = ON');
+db.exec('PRAGMA busy_timeout = 5000');
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS usuarios (
@@ -59,6 +60,7 @@ CREATE TABLE IF NOT EXISTS visitas (
   estacion_id INTEGER NOT NULL REFERENCES estaciones(id),
   puntos INTEGER NOT NULL DEFAULT 0,
   timestamp TEXT NOT NULL,
+  detalle TEXT,
   UNIQUE (sesion_id, estacion_id)
 );
 
@@ -115,7 +117,6 @@ try {
   const n = db.prepare("SELECT COUNT(*) AS n FROM estaciones WHERE tipo = 'estacion'").get().n;
   const viejo = n === 6 ? db.prepare("SELECT id FROM estaciones WHERE codigo = 'e6'").get() : null;
   if (viejo) {
-    db.prepare("DELETE FROM visitas WHERE estacion_id = (SELECT id FROM estaciones WHERE codigo = 'e1')").run();
     db.prepare("DELETE FROM estaciones WHERE codigo = 'e1'").run();
     const up = db.prepare('UPDATE estaciones SET codigo = ?, nombre = ?, orden = ? WHERE codigo = ?');
     up.run('e1', 'Estación 1', 1, 'e2');
@@ -125,7 +126,6 @@ try {
     up.run('e5', 'Estación 5', 5, 'e6');
     db.prepare("UPDATE estaciones SET orden = 6 WHERE codigo = 'final'").run();
     const ub = db.prepare('UPDATE sesiones SET ubicacion = ? WHERE ubicacion = ?');
-    ub.run('registro', 'e1');
     ub.run('e1', 'e2');
     ub.run('e2', 'e3');
     ub.run('e3', 'e4');
@@ -133,7 +133,6 @@ try {
     ub.run('e5', 'e6');
   }
 } catch (_) {}
-try { db.exec("DELETE FROM estaciones WHERE codigo = 'e6'"); db.exec("UPDATE estaciones SET orden = 6 WHERE codigo = 'final'"); } catch (_) {}
 
 function ahora() {
   return new Date().toISOString();

@@ -28,7 +28,7 @@ function expirarSesiones() {
   `).all(limite);
 
   for (const s of vencidas) {
-    db.exec('BEGIN');
+    db.exec('BEGIN IMMEDIATE');
     try {
       db.prepare("UPDATE sesiones SET estado = 'expirada' WHERE id = ?").run(s.id);
       db.prepare("UPDATE personajes SET estado = 'disponible' WHERE id = ?").run(s.personaje_id);
@@ -36,12 +36,13 @@ function expirarSesiones() {
       io.emit('actualizacion', { tipo: 'sesion_expirada', sesion_id: s.id });
       console.log(`[timeout] Sesión ${s.id} expirada`);
     } catch (e) {
-      db.exec('ROLLBACK');
+      try { db.exec('ROLLBACK'); } catch (_) {}
       console.error('[timeout]', e.message);
     }
   }
 }
 setInterval(expirarSesiones, 60 * 1000);
+expirarSesiones();
 
 io.on('connection', (socket) => {
   socket.emit('actualizacion', { tipo: 'conectado' });

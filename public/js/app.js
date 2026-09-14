@@ -28,8 +28,10 @@ async function api(metodo, ruta, cuerpo, pin) {
 }
 
 function mostrarPantalla(id) {
+  const el = document.getElementById(id);
+  if (!el) { console.error('Pantalla no encontrada:', id); return; }
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('activa'));
-  document.getElementById(id).classList.add('activa');
+  el.classList.add('activa');
 }
 
 let toastTimer = null;
@@ -45,6 +47,7 @@ function toast(mensaje, color) {
 }
 
 async function liberarSesion(sesionId, mensaje) {
+  if (!Number.isInteger(sesionId) || sesionId <= 0) { toast('Sesión no válida'); return; }
   if (!confirm(mensaje || '¿Liberar este personaje para otros usuarios?')) return;
   try {
     await api('POST', '/sesiones/liberar', { sesion_id: sesionId });
@@ -58,6 +61,7 @@ socket.on('connect', () => {
     e.textContent = 'En línea';
     e.className = 'estado-conexion online';
   });
+  window.dispatchEvent(new Event('reconnect'));
 });
 socket.on('disconnect', () => {
   document.querySelectorAll('.estado-conexion').forEach(e => {
@@ -70,7 +74,13 @@ const IDLE_MS = 60000;
 let idleTimer = null;
 function reiniciarIdle() {
   clearTimeout(idleTimer);
-  idleTimer = setTimeout(() => location.reload(), IDLE_MS);
+  idleTimer = setTimeout(() => {
+    const activo = document.activeElement;
+    const escribiendo = activo && (activo.tagName === 'INPUT' || activo.tagName === 'TEXTAREA' || activo.isContentEditable);
+    if (escribiendo) { reiniciarIdle(); return; }
+    location.reload();
+  }, IDLE_MS);
 }
-['click', 'touchstart'].forEach(ev => document.addEventListener(ev, reiniciarIdle, { passive: true }));
+['click', 'touchstart', 'keydown', 'input', 'scroll'].forEach(ev => document.addEventListener(ev, reiniciarIdle, { passive: true }));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reiniciarIdle(); });
 reiniciarIdle();

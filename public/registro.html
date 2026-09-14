@@ -90,7 +90,14 @@ async function cargarPersonajes() {
     for (const p of lista) {
       const card = document.createElement('div');
       card.className = 'personaje-card';
-      card.innerHTML = `<span class="personaje-emoji">${p.avatar}</span><span class="personaje-nombre">${p.nombre}</span>`;
+      const emoji = document.createElement('span');
+      emoji.className = 'personaje-emoji';
+      emoji.textContent = p.avatar;
+      const nombre = document.createElement('span');
+      nombre.className = 'personaje-nombre';
+      nombre.textContent = p.nombre;
+      card.appendChild(emoji);
+      card.appendChild(nombre);
       card.onclick = () => elegir(p);
       grid.appendChild(card);
     }

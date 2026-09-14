@@ -61,6 +61,7 @@
   <div class="tabs">
     <button class="tab activa" id="tab-vivo" onclick="cambiarTab('vivo')">En vivo</button>
     <button class="tab" id="tab-historial" onclick="cambiarTab('historial')">Historial completo</button>
+    <button class="boton mini secundario" style="margin-left:auto" onclick="exportarCSV()">Exportar CSV</button>
   </div>
 
   <div id="vista-vivo">
@@ -112,6 +113,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/app.js"></script>
 <script>
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 let PIN = sessionStorage.getItem('tour_pin') || '';
 let historialData = [];
 let TOTAL_EST = 6;
@@ -161,9 +163,9 @@ function pintar(data) {
       const mins = Math.floor((Date.now() - new Date(a.iniciada_en).getTime()) / 60000);
       const inactivo = Math.floor((Date.now() - new Date(a.ultima_actividad_en).getTime()) / 60000);
       return `<tr>
-        <td>${a.avatar} <b>${a.personaje}</b></td>
-        <td>${a.usuario}</td>
-        <td><span class="badge-ubicacion">${nombreUbicacion(a.ubicacion)}</span></td>
+        <td>${esc(a.avatar)} <b>${esc(a.personaje)}</b></td>
+        <td>${esc(a.usuario)}</td>
+        <td><span class="badge-ubicacion">${esc(nombreUbicacion(a.ubicacion))}</span></td>
         <td><b style="color:var(--accent2)">${a.puntos}</b></td>
         <td><div style="align-items:center;display:flex;gap:10px"><span style="font-size:13px">${a.estaciones_visitadas}/${TOTAL_EST}</span><div class="barra-progreso"><div style="width:${a.estaciones_visitadas / TOTAL_EST * 100}%"></div></div></div></td>
         <td>${mins} min</td>
@@ -173,7 +175,7 @@ function pintar(data) {
   }
 
   document.querySelector('#tabla-tiempos tbody').innerHTML =
-    data.tiempos.map(x => `<tr><td>${x.estacion}</td><td>${x.visitas}</td></tr>`).join('');
+    data.tiempos.map(x => `<tr><td>${esc(x.estacion)}</td><td>${x.visitas}</td></tr>`).join('');
 }
 
 async function cargarHistorial() {
@@ -199,18 +201,18 @@ function pintarHistorial() {
     const detalle = `
       <tr class="detalle" id="detalle-${h.sesion_id}" style="display:none"><td colspan="10">
         <div class="detalle-visitas">
-          <b>Recorrido de ${h.nombre} (${h.avatar} ${h.personaje}):</b><br>
+          <b>Recorrido de ${esc(h.nombre)} (${esc(h.avatar)} ${esc(h.personaje)}):</b><br>
           ${h.visitas.length === 0 ? 'Sin estaciones registradas' :
-            h.visitas.map(v => `&nbsp;&nbsp;✓ <b>${v.estacion}</b> — ${v.puntos} pts — ${new Date(v.timestamp).toLocaleString('es-CO')}`).join('<br>')}
-          ${h.premio ? `<br>Premio entregado: <b>${h.premio}</b>` : ''}
+            h.visitas.map(v => `&nbsp;&nbsp;✓ <b>${esc(v.estacion)}</b> — ${v.puntos} pts — ${new Date(v.timestamp).toLocaleString('es-CO')}`).join('<br>')}
+          ${h.premio ? `<br>Premio entregado: <b>${esc(h.premio)}</b>` : ''}
         </div>
       </td></tr>`;
     const fecha = iso => iso ? new Date(iso).toLocaleString('es-CO', { dateStyle: 'short', timeStyle: 'short' }) : '—';
     return `<tr class="fila-historial" onclick="toggleDetalle(${h.sesion_id})">
         <td>▸</td>
-        <td><b>${h.nombre}</b></td>
-        <td>${[h.cedula, h.telefono, h.email].filter(Boolean).join(' · ') || '—'}</td>
-        <td>${h.avatar} ${h.personaje}</td>
+        <td><b>${esc(h.nombre)}</b></td>
+        <td>${esc([h.cedula, h.telefono, h.email].filter(Boolean).join(' · ') || '—')}</td>
+        <td>${esc(h.avatar)} ${esc(h.personaje)}</td>
         <td><span class="badge-estado estado-${h.estado}">${h.estado}</span></td>
         <td><b style="color:var(--accent2)">${h.puntos}</b></td>
         <td>${h.visitas.length}/${TOTAL_EST}</td>
@@ -232,6 +234,20 @@ async function abrirAjustes() {
   document.getElementById('ajuste-pin').value = c.staff_pin;
   document.getElementById('ajuste-timeout').value = c.timeout_min;
   document.getElementById('modal-ajustes').classList.add('abierto');
+}
+
+async function exportarCSV() {
+  try {
+    const r = await fetch('/api/exportar.csv', { headers: { 'x-staff-pin': PIN } });
+    if (!r.ok) throw new Error('No se pudo exportar');
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tour-export.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) { alert(err.message); }
 }
 
 async function guardarAjustes(e) {

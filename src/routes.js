@@ -1,5 +1,6 @@
 const express = require('express');
 const { db, ahora, obtenerConfig, guardarConfig } = require('./db');
+const crypto = require('node:crypto');
 
 const router = express.Router();
 
@@ -7,19 +8,36 @@ function emitir(io, evento, datos) {
   if (io) io.emit(evento, datos);
 }
 
+function sanitize(str, max = 200) {
+  return String(str).replace(/[&<>"'`]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' }[c])).slice(0, max);
+}
+
 function requerirPin(req, res, next) {
   const esperado = obtenerConfig('staff_pin', '1234');
-  const pin = req.get('x-staff-pin') || req.query.pin;
-  if (!pin || pin !== esperado) {
+  const pin = req.get('x-staff-pin');
+  if (!pin || pin.length !== esperado.length || !crypto.timingSafeEqual(Buffer.from(pin), Buffer.from(esperado))) {
     return res.status(401).json({ error: 'PIN de staff inválido' });
   }
   next();
+}
+
+function validarUbicacion(sesion, estacion) {
+  if (estacion.tipo !== 'estacion') return true;
+  const estaciones = db.prepare("SELECT codigo, orden FROM estaciones WHERE tipo = 'estacion' ORDER BY orden").all();
+  const idx = estaciones.findIndex(e => e.codigo === estacion.codigo);
+  if (idx === -1) return false;
+  const esperado = idx === 0 ? 'registro' : estaciones[idx - 1].codigo;
+  return sesion.ubicacion === esperado;
 }
 
 // ---- Personajes ----
 
 router.get('/personajes', (req, res) => {
   const { estado, ubicacion } = req.query;
+  const permitidosEstado = ['disponible', 'en_tour'];
+  const permitidosUbicacion = ['registro', 'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'final'];
+  if (estado && !permitidosEstado.includes(estado)) return res.status(400).json({ error: 'Estado no válido' });
+  if (ubicacion && !permitidosUbicacion.includes(ubicacion)) return res.status(400).json({ error: 'Ubicación no válida' });
   if (estado === 'en_tour' && ubicacion) {
     const filas = db.prepare(`
       SELECT p.* FROM personajes p
@@ -39,24 +57,26 @@ router.get('/personajes', (req, res) => {
 
 router.post('/usuarios', (req, res) => {
   const { nombre, cedula, telefono, email, consentimiento } = req.body || {};
-  if (!nombre || !nombre.trim()) return res.status(400).json({ error: 'El nombre completo es obligatorio' });
-  if (!cedula || !String(cedula).trim()) return res.status(400).json({ error: 'La cédula es obligatoria' });
-  if (!telefono || !String(telefono).trim()) return res.status(400).json({ error: 'El teléfono es obligatorio' });
-  if (!email || !String(email).trim()) return res.status(400).json({ error: 'El correo electrónico es obligatorio' });
-  if (!consentimiento) return res.status(400).json({ error: 'Se requiere el consentimiento de datos' });
+  if (!nombre || typeof nombre !== 'string' || !nombre.trim() || nombre.trim().length > 80) return res.status(400).json({ error: 'El nombre completo es obligatorio (max 80)' });
+  if (!cedula || typeof cedula !== 'string' || !/^[0-9]{6,20}$/.test(String(cedula).trim())) return res.status(400).json({ error: 'La cédula debe ser numérica (6-20 dígitos)' });
+  if (!telefono || typeof telefono !== 'string' || !/^[0-9+\s-]{7,20}$/.test(String(telefono).trim())) return res.status(400).json({ error: 'El teléfono no es válido' });
+  if (!email || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email).trim()) || String(email).trim().length > 80) return res.status(400).json({ error: 'El correo electrónico no es válido' });
+  if (consentimiento !== true) return res.status(400).json({ error: 'Se requiere el consentimiento de datos' });
+  if (/[<>]/.test(nombre) || /[<>]/.test(email)) return res.status(400).json({ error: 'Caracteres no permitidos' });
   const r = db.prepare('INSERT INTO usuarios (nombre, cedula, telefono, email, consentimiento, creado_en) VALUES (?, ?, ?, ?, 1, ?)')
-    .run(nombre.trim(), String(cedula).trim(), String(telefono).trim(), String(email).trim(), ahora());
-  res.status(201).json({ id: Number(r.lastInsertRowid), nombre: nombre.trim() });
+    .run(sanitize(nombre.trim(), 80), String(cedula).trim().slice(0, 20), String(telefono).trim().slice(0, 20), String(email).trim().slice(0, 80), ahora());
+  res.status(201).json({ id: Number(r.lastInsertRowid), nombre: sanitize(nombre.trim(), 80) });
 });
 
 // ---- Sesiones ----
 
 router.post('/sesiones', (req, res) => {
   const { usuario_id, personaje_id } = req.body || {};
+  if (!Number.isInteger(usuario_id) || usuario_id <= 0 || !Number.isInteger(personaje_id) || personaje_id <= 0) return res.status(400).json({ error: 'Datos de sesión no válidos' });
   const usuario = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(usuario_id);
   if (!usuario) return res.status(404).json({ error: 'Usuario no encontrado' });
 
-  db.exec('BEGIN');
+  db.exec('BEGIN IMMEDIATE');
   try {
     const personaje = db.prepare("SELECT * FROM personajes WHERE id = ?").get(personaje_id);
     if (!personaje) throw Object.assign(new Error('Personaje no encontrado'), { status: 404 });
@@ -72,14 +92,17 @@ router.post('/sesiones', (req, res) => {
     emitir(req.app.get('io'), 'actualizacion', { tipo: 'sesion_iniciada', sesion, personaje_id });
     res.status(201).json(sesion);
   } catch (e) {
-    db.exec('ROLLBACK');
-    res.status(e.status || 500).json({ error: e.message });
+    try { db.exec('ROLLBACK'); } catch (_) {}
+    if (e.status) return res.status(e.status).json({ error: e.message });
+    console.error(e);
+    res.status(500).json({ error: 'Error interno' });
   }
 });
 
 // El totem identifica al usuario por su personaje
 router.post('/totem/login', (req, res) => {
   const { personaje_id } = req.body || {};
+  if (!Number.isInteger(personaje_id) || personaje_id <= 0) return res.status(400).json({ error: 'Personaje no válido' });
   const fila = db.prepare(`
     SELECT s.id AS sesion_id, s.estado, u.nombre AS usuario, p.nombre AS personaje, p.avatar,
            COALESCE((SELECT SUM(puntos) FROM visitas WHERE sesion_id = s.id), 0) AS puntos
@@ -100,7 +123,7 @@ router.post('/totem/login', (req, res) => {
   res.json(fila);
 });
 
-// ---- Menu Tótem 1 (almuerzos) ----
+// ---- Catálogos ----
 
 router.get('/menu', (req, res) => {
   res.json(db.prepare('SELECT * FROM platos ORDER BY id').all());
@@ -123,27 +146,28 @@ router.get('/despensa', (req, res) => {
 // ---- Visitas a estaciones ----
 
 router.post('/visitas', (req, res) => {
-  const { sesion_id, estacion_codigo, puntos, plato_id } = req.body || {};
+  const { sesion_id, estacion_codigo } = req.body || {};
+  if (!Number.isInteger(sesion_id) || sesion_id <= 0 || typeof estacion_codigo !== 'string' || !estacion_codigo) return res.status(400).json({ error: 'Datos no válidos' });
   const sesion = db.prepare("SELECT * FROM sesiones WHERE id = ? AND estado = 'activa'").get(sesion_id);
   if (!sesion) return res.status(404).json({ error: 'Sesión activa no encontrada' });
 
   const estacion = db.prepare('SELECT * FROM estaciones WHERE codigo = ?').get(estacion_codigo);
   if (!estacion) return res.status(404).json({ error: 'Estación no encontrada' });
+  if (!validarUbicacion(sesion, estacion)) return res.status(409).json({ error: 'Debes completar la estación anterior primero' });
 
-  let puntosFinal = puntos ?? estacion.puntos;
+  let puntosFinal = estacion.puntos;
   let detalle = null;
 
-  if (estacion_codigo === 'e5' && (req.body.respuesta1 || req.body.respuesta2 || req.body.respuesta3)) {
+  if (estacion_codigo === 'e5') {
     const r1 = req.body.respuesta1 ? String(req.body.respuesta1).trim() : '';
     const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';
     const r3 = req.body.respuesta3 ? String(req.body.respuesta3).trim() : '';
     if (!r1) return res.status(400).json({ error: 'Responde la primera pregunta' });
     if (!r2) return res.status(400).json({ error: 'Responde la segunda pregunta' });
     if (!r3) return res.status(400).json({ error: 'Elige qué quieres comer hoy' });
-    db.exec('BEGIN');
+    db.exec('BEGIN IMMEDIATE');
     try {
-      puntosFinal = estacion.puntos;
-      detalle = `Frecuencia: ${r1} | Gasto: ${r2} | Antojo: ${r3}`;
+      detalle = `Frecuencia: ${sanitize(r1)} | Gasto: ${sanitize(r2)} | Antojo: ${sanitize(r3)}`;
       const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
@@ -151,21 +175,22 @@ router.post('/visitas', (req, res) => {
       emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
     } catch (e) {
-      db.exec('ROLLBACK');
+      try { db.exec('ROLLBACK'); } catch (_) {}
       if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
-      return res.status(e.status || 500).json({ error: e.message });
+      if (e.status) return res.status(e.status).json({ error: e.message });
+      console.error(e);
+      return res.status(500).json({ error: 'Error interno' });
     }
   }
 
-  if (estacion_codigo === 'e3' && req.body.respuesta1) {
-    const r1 = String(req.body.respuesta1).trim();
+  if (estacion_codigo === 'e3') {
+    const r1 = String(req.body.respuesta1 || '').trim();
     const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';
     if (r1 !== 'Sí' && r1 !== 'No') return res.status(400).json({ error: 'Responde la primera pregunta' });
     if (r1 === 'Sí' && !r2) return res.status(400).json({ error: 'Responde la segunda pregunta' });
-    db.exec('BEGIN');
+    db.exec('BEGIN IMMEDIATE');
     try {
-      puntosFinal = estacion.puntos;
-      detalle = r1 === 'Sí' ? `Mascotas: Sí | Motivo: ${r2}` : 'Mascotas: No';
+      detalle = r1 === 'Sí' ? `Mascotas: Sí | Motivo: ${sanitize(r2)}` : 'Mascotas: No';
       const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
@@ -173,22 +198,23 @@ router.post('/visitas', (req, res) => {
       emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
     } catch (e) {
-      db.exec('ROLLBACK');
+      try { db.exec('ROLLBACK'); } catch (_) {}
       if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
-      return res.status(e.status || 500).json({ error: e.message });
+      if (e.status) return res.status(e.status).json({ error: e.message });
+      console.error(e);
+      return res.status(500).json({ error: 'Error interno' });
     }
   }
 
-  if (estacion_codigo === 'e4' && req.body.respuesta1) {
-    const r1 = String(req.body.respuesta1).trim();
+  if (estacion_codigo === 'e4') {
+    const r1 = String(req.body.respuesta1 || '').trim();
     const r2 = req.body.respuesta2 ? String(req.body.respuesta2).trim() : '';
     const r3 = req.body.respuesta3 ? String(req.body.respuesta3).trim() : '';
     if (r1 !== 'Sí' && r1 !== 'No') return res.status(400).json({ error: 'Responde la primera pregunta' });
     if (r1 === 'Sí' && (!r2 || !r3)) return res.status(400).json({ error: 'Completa todas las preguntas' });
-    db.exec('BEGIN');
+    db.exec('BEGIN IMMEDIATE');
     try {
-      puntosFinal = estacion.puntos;
-      detalle = r1 === 'Sí' ? `Vehículos: Sí | Tipo: ${r2} | Gasto: ${r3}` : 'Vehículos: No';
+      detalle = r1 === 'Sí' ? `Vehículos: Sí | Tipo: ${sanitize(r2)} | Gasto: ${sanitize(r3)}` : 'Vehículos: No';
       const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
@@ -196,42 +222,27 @@ router.post('/visitas', (req, res) => {
       emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
     } catch (e) {
-      db.exec('ROLLBACK');
+      try { db.exec('ROLLBACK'); } catch (_) {}
       if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
-      return res.status(e.status || 500).json({ error: e.message });
+      if (e.status) return res.status(e.status).json({ error: e.message });
+      console.error(e);
+      return res.status(500).json({ error: 'Error interno' });
     }
   }
 
-  if (estacion_codigo === 'e4' && req.body.combustible_id) {
-    db.exec('BEGIN');
-    try {
-      const c = db.prepare('SELECT * FROM combustible WHERE id = ?').get(req.body.combustible_id);
-      if (!c) throw Object.assign(new Error('Monto no encontrado'), { status: 404 });
-      puntosFinal = c.puntos;
-      detalle = c.etiqueta;
-      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
-        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
-      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
-      db.exec('COMMIT');
-      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
-      return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, monto: c.etiqueta, puntos: puntosFinal });
-    } catch (e) {
-      db.exec('ROLLBACK');
-      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
-      return res.status(e.status || 500).json({ error: e.message });
-    }
-  }
-
-  if (estacion_codigo === 'e1' && req.body.despensa_ids) {
+  if (estacion_codigo === 'e1') {
     const ids = req.body.despensa_ids;
-    if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'Selecciona al menos un producto' });
-    db.exec('BEGIN');
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 20) return res.status(400).json({ error: 'Selecciona al menos un producto' });
+    if (!ids.every(id => Number.isInteger(id) && id > 0)) return res.status(400).json({ error: 'Productos no válidos' });
+    const únicos = [...new Set(ids)];
+    if (únicos.length !== ids.length) return res.status(400).json({ error: 'Productos duplicados' });
+    db.exec('BEGIN IMMEDIATE');
     try {
-      const placeholders = ids.map(() => '?').join(',');
-      const items = db.prepare(`SELECT * FROM despensa WHERE id IN (${placeholders})`).all(...ids);
-      if (items.length !== ids.length) throw Object.assign(new Error('Producto no encontrado'), { status: 404 });
+      const placeholders = únicos.map(() => '?').join(',');
+      const items = db.prepare(`SELECT * FROM despensa WHERE id IN (${placeholders})`).all(...únicos);
+      if (items.length !== únicos.length) throw Object.assign(new Error('Producto no encontrado'), { status: 404 });
       puntosFinal = items.reduce((s, p) => s + p.puntos, 0);
-      detalle = items.map(p => p.nombre).join(', ');
+      detalle = items.map(p => sanitize(p.nombre, 50)).join(', ');
       const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
@@ -239,21 +250,23 @@ router.post('/visitas', (req, res) => {
       emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, productos: items.map(p => p.nombre), puntos: puntosFinal });
     } catch (e) {
-      db.exec('ROLLBACK');
+      try { db.exec('ROLLBACK'); } catch (_) {}
       if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
-      return res.status(e.status || 500).json({ error: e.message });
+      if (e.status) return res.status(e.status).json({ error: e.message });
+      console.error(e);
+      return res.status(500).json({ error: 'Error interno' });
     }
   }
 
-  if (estacion_codigo === 'e2' && (req.body.respuesta1 || req.body.respuesta2)) {
+  if (estacion_codigo === 'e2') {
     const r1 = req.body.respuesta1;
     const r2 = req.body.respuesta2;
-    if (!Array.isArray(r1) || r1.length === 0) return res.status(400).json({ error: 'Responde la primera pregunta' });
-    if (!r2 || !String(r2).trim()) return res.status(400).json({ error: 'Responde la segunda pregunta' });
-    db.exec('BEGIN');
+    if (!Array.isArray(r1) || r1.length === 0 || r1.length > 10) return res.status(400).json({ error: 'Responde la primera pregunta' });
+    if (r1.some(v => typeof v !== 'string' || v.trim().length === 0 || v.trim().length > 50)) return res.status(400).json({ error: 'Opciones no válidas' });
+    if (!r2 || typeof r2 !== 'string' || !r2.trim() || r2.trim().length > 50) return res.status(400).json({ error: 'Responde la segunda pregunta' });
+    db.exec('BEGIN IMMEDIATE');
     try {
-      puntosFinal = estacion.puntos;
-      detalle = `Compra: ${r1.join(', ')} | Gasto: ${r2}`;
+      detalle = `Compra: ${r1.map(v => sanitize(v.trim(), 50)).join(', ')} | Gasto: ${sanitize(r2.trim(), 50)}`;
       const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
         .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
       db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
@@ -261,45 +274,32 @@ router.post('/visitas', (req, res) => {
       emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
       return res.status(201).json({ id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal });
     } catch (e) {
-      db.exec('ROLLBACK');
+      try { db.exec('ROLLBACK'); } catch (_) {}
       if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
-      return res.status(e.status || 500).json({ error: e.message });
+      if (e.status) return res.status(e.status).json({ error: e.message });
+      console.error(e);
+      return res.status(500).json({ error: 'Error interno' });
     }
   }
 
-  if (estacion_codigo === 'e3' && req.body.productos_ids) {
-    const ids = req.body.productos_ids;
-    if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'Selecciona al menos un producto' });
-    db.exec('BEGIN');
-    try {
-      const placeholders = ids.map(() => '?').join(',');
-      const prods = db.prepare(`SELECT * FROM productos WHERE id IN (${placeholders})`).all(...ids);
-      if (prods.length !== ids.length) throw Object.assign(new Error('Producto no encontrado'), { status: 404 });
-      puntosFinal = prods.reduce((s, p) => s + p.puntos, 0);
-      detalle = prods.map(p => p.nombre).join(', ');
-      const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
-        .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
-      db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
-      db.exec('COMMIT');
-      const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, productos: prods.map(p => p.nombre), puntos: puntosFinal };
-      emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
-      return res.status(201).json(visita);
-    } catch (e) {
-      db.exec('ROLLBACK');
-      if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
-      return res.status(e.status || 500).json({ error: e.message });
-    }
-  }
+  // Fallback solo para estaciones no específicas (futuras) — requiere estar en orden y sin payload esperado
+  const estacionesConocidas = ['e1', 'e2', 'e3', 'e4', 'e5'];
+  if (estacionesConocidas.includes(estacion_codigo)) return res.status(400).json({ error: 'Datos incompletos para esta estación' });
 
+  db.exec('BEGIN IMMEDIATE');
   try {
     const r = db.prepare('INSERT INTO visitas (sesion_id, estacion_id, puntos, timestamp, detalle) VALUES (?, ?, ?, ?, ?)')
       .run(sesion_id, estacion.id, puntosFinal, ahora(), detalle);
     db.prepare('UPDATE sesiones SET ultima_actividad_en = ?, ubicacion = ? WHERE id = ?').run(ahora(), estacion_codigo, sesion_id);
+    db.exec('COMMIT');
     const visita = { id: Number(r.lastInsertRowid), sesion_id, estacion: estacion.nombre, puntos: puntosFinal };
     emitir(req.app.get('io'), 'actualizacion', { tipo: 'visita_registrada', sesion_id, estacion: estacion.nombre });
     res.status(201).json(visita);
   } catch (e) {
-    res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
+    try { db.exec('ROLLBACK'); } catch (_) {}
+    if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'Esta estación ya fue registrada para esta sesión' });
+    console.error(e);
+    res.status(500).json({ error: 'Error interno' });
   }
 });
 
@@ -307,7 +307,8 @@ router.post('/visitas', (req, res) => {
 
 router.post('/sesiones/liberar', (req, res) => {
   const { sesion_id } = req.body || {};
-  db.exec('BEGIN');
+  if (!Number.isInteger(sesion_id) || sesion_id <= 0) return res.status(400).json({ error: 'Sesión no válida' });
+  db.exec('BEGIN IMMEDIATE');
   try {
     const sesion = db.prepare("SELECT * FROM sesiones WHERE id = ? AND estado = 'activa'").get(sesion_id);
     if (!sesion) throw Object.assign(new Error('Sesión activa no encontrada'), { status: 404 });
@@ -319,8 +320,10 @@ router.post('/sesiones/liberar', (req, res) => {
     emitir(req.app.get('io'), 'actualizacion', { tipo: 'sesion_liberada', sesion_id });
     res.json({ ok: true, personaje_liberado: true });
   } catch (e) {
-    db.exec('ROLLBACK');
-    res.status(e.status || 500).json({ error: e.message });
+    try { db.exec('ROLLBACK'); } catch (_) {}
+    if (e.status) return res.status(e.status).json({ error: e.message });
+    console.error(e);
+    res.status(500).json({ error: 'Error interno' });
   }
 });
 
@@ -328,7 +331,8 @@ router.post('/sesiones/liberar', (req, res) => {
 
 router.post('/finalizar', requerirPin, (req, res) => {
   const { sesion_id } = req.body || {};
-  db.exec('BEGIN');
+  if (!Number.isInteger(sesion_id) || sesion_id <= 0) return res.status(400).json({ error: 'Sesión no válida' });
+  db.exec('BEGIN IMMEDIATE');
   try {
     const sesion = db.prepare("SELECT * FROM sesiones WHERE id = ? AND estado = 'activa'").get(sesion_id);
     if (!sesion) throw Object.assign(new Error('Sesión activa no encontrada'), { status: 404 });
@@ -338,7 +342,8 @@ router.post('/finalizar', requerirPin, (req, res) => {
     let valorPremio = null;
     if (premio) {
       valorPremio = premio.valor;
-      db.prepare("UPDATE premios SET estado = 'entregado', sesion_id = ? WHERE id = ?").run(sesion_id, premio.id);
+      const upd = db.prepare("UPDATE premios SET estado = 'entregado', sesion_id = ? WHERE id = ? AND estado = 'disponible'").run(sesion_id, premio.id);
+      if (upd.changes === 0) throw Object.assign(new Error('Premio ya tomado, reintenta'), { status: 409 });
     }
 
     const t = ahora();
@@ -351,8 +356,10 @@ router.post('/finalizar', requerirPin, (req, res) => {
     emitir(req.app.get('io'), 'actualizacion', { tipo: 'premio_entregado', ...resultado });
     res.json(resultado);
   } catch (e) {
-    db.exec('ROLLBACK');
-    res.status(e.status || 500).json({ error: e.message });
+    try { db.exec('ROLLBACK'); } catch (_) {}
+    if (e.status) return res.status(e.status).json({ error: e.message });
+    console.error(e);
+    res.status(500).json({ error: 'Error interno' });
   }
 });
 
@@ -398,7 +405,7 @@ router.get('/dashboard', requerirPin, (req, res) => {
       estacion: e.nombre,
       codigo: e.codigo,
       visitas: db.prepare('SELECT COUNT(*) AS n FROM visitas WHERE estacion_id = ?').get(e.id).n,
-      minutos_desde_inicio: Math.round((fila.min_promedio || 0) * 10) / 10
+      minutos_desde_inicio: Math.round(((fila?.min_promedio) || 0) * 10) / 10
     };
   });
 
@@ -446,7 +453,11 @@ router.get('/exportar.csv', requerirPin, (req, res) => {
     ORDER BY s.id
   `).all();
 
-  const esc = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const esc = v => {
+    let s = String(v ?? '');
+    if (/^[=+\-@|]/.test(s)) s = "'" + s;
+    return '"' + s.replace(/"/g, '""') + '"';
+  };
   const lineas = ['id,nombre,cedula,telefono,email,personaje,estado,iniciada_en,completada_en,puntos,premio'];
   for (const f of filas) lineas.push([f.id, f.nombre, f.cedula, f.telefono, f.email, f.personaje, f.estado, f.iniciada_en, f.completada_en, f.puntos, f.premio].map(esc).join(','));
   res.set('Content-Type', 'text/csv; charset=utf-8');
@@ -465,11 +476,13 @@ router.get('/config', requerirPin, (req, res) => {
 
 router.put('/config', requerirPin, (req, res) => {
   const { staff_pin, timeout_min } = req.body || {};
-  if (staff_pin !== undefined && String(staff_pin).length < 4) {
-    return res.status(400).json({ error: 'El PIN debe tener al menos 4 caracteres' });
+  if (staff_pin !== undefined) {
+    const s = String(staff_pin);
+    if (s.length < 4 || s.length > 32 || !/^[0-9A-Za-z]+$/.test(s)) return res.status(400).json({ error: 'El PIN debe ser alfanumérico de 4-32 caracteres' });
   }
-  if (timeout_min !== undefined && (Number(timeout_min) < 1 || Number(timeout_min) > 240)) {
-    return res.status(400).json({ error: 'El timeout debe estar entre 1 y 240 minutos' });
+  if (timeout_min !== undefined) {
+    const n = Number(timeout_min);
+    if (!Number.isInteger(n) || n < 1 || n > 240) return res.status(400).json({ error: 'El timeout debe ser entero entre 1 y 240 minutos' });
   }
   if (staff_pin !== undefined) guardarConfig('staff_pin', String(staff_pin));
   if (timeout_min !== undefined) guardarConfig('timeout_min', Number(timeout_min));

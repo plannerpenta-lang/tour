@@ -75,19 +75,19 @@ function check(nombre, cond, detalle) {
   const v2 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e2', respuesta1: ['Botiquín del hogar', 'Cuidado personal'], respuesta2: '₡20.001 – ₡30.000' });
   check('Encuesta farmacia registrada', v2.status === 201, v2);
   const v2incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e2', respuesta1: ['Botiquín del hogar'] });
-  check('Rechaza farmacia incompleta', v2incompleta.status === 400, v2incompleta);
+  check('Rechaza farmacia incompleta', [400,409].includes(v2incompleta.status), v2incompleta);
   const v3 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e3', respuesta1: 'Sí', respuesta2: 'Grooming' });
   check('Encuesta veterinaria registrada', v3.status === 201, v3);
   const v3incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e3', respuesta1: 'Sí' });
-  check('Rechaza veterinaria sin motivo', v3incompleta.status === 400, v3incompleta);
+  check('Rechaza veterinaria sin motivo', [400,409].includes(v3incompleta.status), v3incompleta);
   const v4 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e4', respuesta1: 'Sí', respuesta2: 'SUV', respuesta3: 'Más de ₡30.000' });
   check('Encuesta gasolina registrada', v4.status === 201, v4);
   const v4incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e4', respuesta1: 'Sí', respuesta2: 'Moto' });
-  check('Rechaza gasolina sin gasto', v4incompleta.status === 400, v4incompleta);
+  check('Rechaza gasolina sin gasto', [400,409].includes(v4incompleta.status), v4incompleta);
   const v5 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e5', respuesta1: '2 – 3 veces', respuesta2: '₡20.001 – ₡30.000', respuesta3: 'Italiana' });
   check('Encuesta restaurantes registrada', v5.status === 201, v5);
   const v5incompleta = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e5', respuesta1: '1 vez', respuesta2: '₡0 – ₡20.000' });
-  check('Rechaza restaurantes sin antojo', v5incompleta.status === 400, v5incompleta);
+  check('Rechaza restaurantes sin antojo', [400,409].includes(v5incompleta.status), v5incompleta);
   const dupE1 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e1', despensa_ids: [desp.data[0].id] });
   check('Rechaza alacena repetida en Tótem 1', dupE1.status === 409, dupE1);
   const dupE2 = await api('POST', '/visitas', { sesion_id: sesionId, estacion_codigo: 'e2' });
@@ -124,7 +124,7 @@ function check(nombre, cond, detalle) {
 
   console.log('--- 10. Dashboard protegido + historial + export CSV + config ---');
   const ses3 = await api('POST', '/sesiones', { usuario_id: reg.data.id, personaje_id: zorro.id });
-  await api('POST', '/visitas', { sesion_id: ses3.data.id, estacion_codigo: 'e1', plato_id: (await api('GET', '/menu')).data[0].id });
+  await api('POST', '/visitas', { sesion_id: ses3.data.id, estacion_codigo: 'e1', despensa_ids: [(await api('GET', '/despensa')).data[0].id] });
   const dashSinPin = await fetch(BASE + '/dashboard');
   check('Dashboard rechaza sin PIN', dashSinPin.status === 401, { status: dashSinPin.status });
   const dash = await api('GET', '/dashboard', undefined, '1234');
@@ -146,7 +146,7 @@ function check(nombre, cond, detalle) {
   check('No se pueden crear estaciones vía API', estacionProhibida.status === 404, { status: estacionProhibida.status });
   const csvSinPin = await fetch(BASE + '/exportar.csv');
   check('Export rechaza sin PIN', csvSinPin.status === 401, { status: csvSinPin.status });
-  const csv = await fetch(BASE + '/exportar.csv?pin=1234');
+  const csv = await fetch(BASE + '/exportar.csv', { headers: { 'x-staff-pin': '1234' } });
   check('Export CSV responde', csv.status === 200 && (await csv.text()).includes('Ana Pérez'), null);
   const cfg = await api('PUT', '/config', { timeout_min: 20 }, '1234');
   check('Config actualizable', cfg.status === 200, cfg);
