@@ -70,17 +70,62 @@ socket.on('disconnect', () => {
   });
 });
 
-const IDLE_MS = 60000;
+const IDLE_MS = 120000;
+const WARN_MS = 15000;
 let idleTimer = null;
+let warnTimer = null;
+let warnEl = null;
+
+function crearWarn() {
+  if (warnEl) return warnEl;
+  warnEl = document.createElement('div');
+  warnEl.id = 'idle-warn';
+  warnEl.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;z-index:100;padding:24px;';
+  warnEl.innerHTML = '<div style="background:var(--card);padding:32px;border-radius:20px;text-align:center;max-width:420px;width:100%"><h2 style="font-family:Nunito,sans-serif;margin-bottom:12px;">¿Sigues ahí?</h2><p style="color:var(--muted);margin-bottom:20px;">Toca para continuar — reinicio en <b id="idle-count">15</b>s</p><button class="boton" onclick="reiniciarIdle()">Continuar</button></div>';
+  warnEl.addEventListener('click', (e) => { if (e.target === warnEl) reiniciarIdle(); });
+  document.body.appendChild(warnEl);
+  return warnEl;
+}
+
+function ocultarWarn() {
+  if (warnEl) warnEl.style.display = 'none';
+  clearTimeout(warnTimer);
+}
+
+function mostrarWarn() {
+  const el = crearWarn();
+  let c = 15;
+  el.style.display = 'flex';
+  const t = document.getElementById('idle-count');
+  if (t) t.textContent = c;
+  const tick = () => {
+    c--;
+    const tt = document.getElementById('idle-count');
+    if (tt) tt.textContent = c;
+    if (c <= 0) { el.style.display = 'none'; location.reload(); }
+    else warnTimer = setTimeout(tick, 1000);
+  };
+  warnTimer = setTimeout(tick, 1000);
+}
+
 function reiniciarIdle() {
+  ocultarWarn();
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
-    const activo = document.activeElement;
-    const escribiendo = activo && (activo.tagName === 'INPUT' || activo.tagName === 'TEXTAREA' || activo.isContentEditable);
+    const a = document.activeElement;
+    const escribiendo = a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
     if (escribiendo) { reiniciarIdle(); return; }
-    location.reload();
-  }, IDLE_MS);
+    mostrarWarn();
+  }, IDLE_MS - WARN_MS);
 }
 ['click', 'touchstart', 'keydown', 'input', 'scroll'].forEach(ev => document.addEventListener(ev, reiniciarIdle, { passive: true }));
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reiniciarIdle(); });
 reiniciarIdle();
+
+window.addEventListener('beforeunload', () => {
+  try {
+    if (typeof sesionActual !== 'undefined' && sesionActual) sessionStorage.setItem('tour_sesion', JSON.stringify(sesionActual));
+    const activa = document.querySelector('.screen.activa');
+    if (activa) sessionStorage.setItem('tour_pantalla', activa.id);
+  } catch (_) {}
+});

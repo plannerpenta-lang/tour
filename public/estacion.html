@@ -12,6 +12,7 @@
 <div class="barra-superior">
   <div class="barra-titulo" id="titulo-estacion">Estación</div>
   <div class="barra-paso" id="paso-estacion"></div>
+  <div id="identidad-sticky"><span class="ident-emoji" id="ident-emoji"></span><span id="ident-nombre"></span><span class="ident-cambiar" onclick="volverAPersonajes()">Cambiar</span></div>
   <div class="estado-conexion online">En línea</div>
 </div>
 
@@ -97,6 +98,7 @@
   <div class="avatar-hero" id="farm-avatar" style="font-size:50px"></div>
   <h1 id="farm-saludo"></h1>
   <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Qué compras normalmente en las farmacias?</p>
+  <div class="step-dots"><span class="activo"></span><span></span></div>
   <div id="grid-farm1" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
   <p style="color:var(--muted); margin-top:14px" id="farm1-count"></p>
   <button class="boton grande" id="boton-farm1" onclick="irFarm2()" style="margin-top:10px" disabled>Continuar</button>
