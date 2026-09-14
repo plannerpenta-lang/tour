@@ -76,10 +76,10 @@ label.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px
 
 .boton {
   background: var(--accent);
-  background-image: linear-gradient(135deg, var(--accent), #0a8ab0);
-  border: none;
+  background-image: linear-gradient(135deg, #00B3E3, #0090b8);
+  border: 1px solid rgba(255,255,255,.14);
   border-radius: 12px;
-  color: #fff;
+  color: #0a1a38;
   cursor: pointer;
   font-family: 'Nunito', 'Inter', sans-serif;
   font-size: 18px;
