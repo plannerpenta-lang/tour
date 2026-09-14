@@ -9,48 +9,88 @@
 </head>
 <body>
 
+<div class="brand-top">
+  <div class="brand-left">
+    <img src="/img/brand/bn-logo.svg" alt="BN" style="height:30px">
+  </div>
+  <div class="brand-spacer"></div>
+  <span class="brand-tagline">Para todo, <em>todos los días.</em></span>
+</div>
+
 <div class="barra-superior">
   <div class="barra-titulo">Registro del Tour</div>
   <div class="estado-conexion online">En línea</div>
 </div>
 
 <div id="pantalla-forma" class="screen activa">
-  <h1>¡Bienvenido!</h1>
-  <p class="subtitulo">Regístrate y elige tu compañero de aventura</p>
-  <form class="tarjeta-forma" id="forma-registro">
-    <input type="text" id="campo-nombre" placeholder="Nombre completo" autocomplete="off" required maxlength="80">
-    <input type="text" id="campo-cedula" placeholder="Cédula" autocomplete="off" required maxlength="20" inputmode="numeric">
-    <input type="tel" id="campo-telefono" placeholder="Teléfono" autocomplete="off" required maxlength="20">
-    <input type="email" id="campo-email" placeholder="Correo electrónico" autocomplete="off" required maxlength="80">
-    <label class="check-linea">
-      <input type="checkbox" id="campo-consentimiento">
-      <span>Autorizo el tratamiento de mis datos personales para participar en la experiencia.</span>
-    </label>
-    <button type="submit" class="boton">CONTINUAR</button>
-  </form>
+  <div class="frame frame-blue">
+    <div class="panel-blanco">
+      <h1>¡Hola!</h1>
+      <p class="sub">Ingresa tus datos para empezar el recorrido.</p>
+      <form class="tarjeta-forma" id="forma-registro" style="background:transparent; box-shadow:none; padding:0">
+        <input type="text" id="campo-nombre" placeholder="Nombre completo" autocomplete="off" required maxlength="80">
+        <input type="text" id="campo-cedula" placeholder="Cédula" autocomplete="off" required maxlength="20" inputmode="numeric">
+        <input type="tel" id="campo-telefono" placeholder="Teléfono" autocomplete="off" required maxlength="20">
+        <input type="email" id="campo-email" placeholder="Correo electrónico" autocomplete="off" required maxlength="80">
+        <label class="check-linea">
+          <input type="checkbox" id="campo-consentimiento">
+          <span>Autorizo el tratamiento de mis datos personales para participar en la experiencia.</span>
+        </label>
+        <button type="submit" class="boton primario-azul" style="margin-top:6px">Continuar</button>
+      </form>
+    </div>
+  </div>
 </div>
 
 <div id="pantalla-personajes" class="screen">
-  <h1>Elige tu personaje</h1>
-  <p class="subtitulo">Lo usarás para identificarte en cada estación del tour</p>
-  <div class="grid-personajes" id="grid-personajes"></div>
-  <button class="boton secundario" style="margin-top:24px; width:min(300px,80vw)" onclick="volverForma()">← Volver</button>
+  <div class="frame frame-green">
+    <div class="panel-blanco">
+      <h1>Elige tu personaje</h1>
+      <p class="sub">Lo usarás para identificarte en cada estación del tour.</p>
+      <div class="grid-personajes" id="grid-personajes" style="margin: 6px auto 12px"></div>
+      <div style="text-align:center">
+        <button class="boton secundario" onclick="volverForma()">← Volver</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="pantalla-confirmar" class="screen">
-  <div class="avatar-hero" id="confirmar-avatar"></div>
-  <h1 id="confirmar-nombre"></h1>
-  <p class="subtitulo">¿Este será tu personaje? Quedará asociado a tu recorrido.</p>
-  <button class="boton grande" onclick="confirmarSeleccion()">✓ Sí, es mío</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-personajes')">Elegir otro</button>
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <div class="avatar-hero" id="confirmar-avatar"></div>
+      <h1 id="confirmar-nombre"></h1>
+      <p class="sub">¿Este será tu personaje?<br>Quedará asociado a tu recorrido.</p>
+      <div class="mini-stack" style="margin-top:14px">
+        <button class="boton primario-azul" onclick="confirmarSeleccion()">✓ Sí, es mío</button>
+        <button class="boton secundario" onclick="mostrarPantalla('pantalla-personajes')">Elegir otro</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="pantalla-exito" class="screen">
-  <div class="avatar-hero" id="exito-avatar"></div>
-  <h1>¡Listo, <span id="exito-nombre"></span>!</h1>
-  <p class="subtitulo">Tu personaje quedó bloqueado para ti.<br>Dirígete a la <b>Estación 1</b> y toca tu avatar para continuar.</p>
-  <button class="boton grande" onclick="location.reload()">OK ✓</button>
-  <div style="color:var(--muted); margin-top:24px; font-size:15px">Esta pantalla se reinicia automáticamente…</div>
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <div class="avatar-hero" id="exito-avatar"></div>
+      <h1>¡Listo, <span id="exito-nombre"></span>!</h1>
+      <p class="sub">Tu personaje quedó bloqueado para ti.<br>Dirígete a la primera estación y toca tu avatar.</p>
+      <div class="mini-stack" style="margin-top:14px">
+        <button class="boton primario-azul" onclick="location.reload()">OK ✓</button>
+      </div>
+      <p style="color:var(--text-soft); margin-top:18px; font-size:14px">Esta pantalla se reinicia automáticamente…</p>
+    </div>
+  </div>
+</div>
+
+<div class="brand-bottom">
+  <div class="brand-left">
+    <img src="/img/brand/mastercard.svg" alt="Mastercard" style="height:24px">
+    <span style="color:var(--bn-navy); opacity:.4">|</span>
+    <img src="/img/brand/bn-logo.svg" alt="BN" style="height:26px">
+  </div>
+  <div class="brand-spacer"></div>
+  <span class="brand-tagline">Para todo, <em>todos los días.</em></span>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>

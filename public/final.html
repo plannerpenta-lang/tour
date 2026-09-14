@@ -9,45 +9,112 @@
 </head>
 <body>
 
+<div class="brand-top">
+  <div class="brand-left">
+    <img src="/img/brand/bn-logo.svg" alt="BN" style="height:30px">
+  </div>
+  <div class="brand-spacer"></div>
+  <span class="brand-tagline">Para todo, <em>todos los días.</em></span>
+</div>
+
 <div class="barra-superior">
   <div class="barra-titulo">Entrega de Premio</div>
   <div class="estado-conexion online">En línea</div>
 </div>
 
+<!-- Pantalla: selección de personaje -->
 <div id="pantalla-personajes" class="screen activa">
-  <h1>¡Última parada!</h1>
-  <p class="subtitulo">Toca tu personaje para recibir tu premio</p>
-  <div class="grid-personajes" id="grid-personajes"></div>
+  <div class="frame frame-green">
+    <div class="panel-blanco">
+      <h1>¡Última parada!</h1>
+      <p class="sub">Toca tu personaje para recibir tu premio.</p>
+      <div class="grid-personajes" id="grid-personajes" style="margin: 6px auto 4px"></div>
+    </div>
+  </div>
 </div>
 
+<!-- Pantalla: resumen / celebación -->
 <div id="pantalla-resumen" class="screen">
-  <div class="avatar-hero" id="resumen-avatar"></div>
-  <h1>¡Felicidades, <span id="resumen-usuario"></span>!</h1>
-  <p class="subtitulo">¡Completaste el tour!</p>
-  <button class="boton grande celebrando" onclick="mostrarPantalla('pantalla-pin')">Recibir mi premio</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">Volver ←</button>
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <div class="avatar-hero celebrando" id="resumen-avatar"></div>
+      <h1>¡Felicidades, <span id="resumen-usuario"></span>!</h1>
+      <p class="sub">¡Completaste el tour!</p>
+      <div class="mini-stack" style="margin-top:14px">
+        <button class="boton primario-azul" onclick="mostrarPantalla('pantalla-polaroid')">Recibir mi premio</button>
+        <button class="boton secundario" onclick="volverAPersonajes()">Volver ←</button>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- Pantalla: polaroid final (página 13 del diseño) -->
+<div id="pantalla-polaroid" class="screen">
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <h2>¡Comparte tu experiencia!</h2>
+      <p class="sub" style="margin-bottom:18px">Tu recorrido por el tour BN Mastercard quedó como<br>una postal que vale la pena recordar.</p>
+      <div class="polaroid" style="margin: 0 auto 18px">
+        <div class="polaroid-foto" id="polaroid-foto">
+          <span id="polaroid-emoji" style="font-size:120px">🦐</span>
+        </div>
+        <div class="polaroid-acciones">
+          <span class="heart">❤</span>
+          <span>💬</span>
+          <span>✈</span>
+          <span>🔖</span>
+        </div>
+      </div>
+      <div class="mini-stack">
+        <button class="boton primario-azul" onclick="mostrarPantalla('pantalla-pin')">Continuar →</button>
+        <button class="boton secundario" onclick="mostrarPantalla('pantalla-resumen')">← Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pantalla: PIN del staff -->
 <div id="pantalla-pin" class="screen">
-  <h1>Confirmación del staff</h1>
-  <p class="subtitulo">Un miembro del equipo debe ingresar el PIN<br>para entregar el premio</p>
-  <form class="tarjeta-forma" style="align-items:center" onsubmit="reclamarPremio(event)">
-    <input type="password" id="campo-pin-staff" inputmode="numeric" maxlength="12"
-      placeholder="PIN" required autocomplete="off"
-      style="text-align:center; font-size:24px; letter-spacing:8px; width:260px">
-    <button type="submit" class="boton">Entregar premio</button>
-    <button type="button" class="boton secundario" onclick="liberarSesion(sesionActual.sesion_id ?? sesionActual.id, '¿Liberar este personaje SIN entregar premio?')">
-      El usuario se retiró · liberar sin premio
-    </button>
-    <button type="button" class="boton secundario" onclick="mostrarPantalla('pantalla-resumen')">← Volver</button>
-  </form>
+  <div class="frame frame-blue">
+    <div class="panel-blanco" style="text-align:center">
+      <h2>Confirmación del staff</h2>
+      <p class="sub">Un miembro del equipo debe ingresar el PIN<br>para entregar el premio.</p>
+      <form class="tarjeta-forma" style="background:transparent; box-shadow:none; padding:0; align-items:center" onsubmit="reclamarPremio(event)">
+        <input type="password" id="campo-pin-staff" inputmode="numeric" maxlength="12"
+          placeholder="PIN" required autocomplete="off"
+          style="text-align:center; font-size:24px; letter-spacing:8px; width:260px">
+        <button type="submit" class="boton primario-azul" style="width:100%">Entregar premio</button>
+        <button type="button" class="boton secundario" style="width:100%"
+          onclick="liberarSesion(sesionActual.sesion_id ?? sesionActual.id, '¿Liberar este personaje SIN entregar premio?')">
+          El usuario se retiró · liberar sin premio
+        </button>
+        <button type="button" class="boton secundario" style="width:100%" onclick="mostrarPantalla('pantalla-polaroid')">← Volver</button>
+      </form>
+    </div>
+  </div>
 </div>
 
+<!-- Pantalla: premio final -->
 <div id="pantalla-premio" class="screen">
-  <h1>¡Tu premio!</h1>
-  <div class="codigo-premio" id="codigo-premio"></div>
-  <p class="subtitulo">Tu personaje queda liberado para el próximo aventurero.</p>
-  <div style="color:var(--muted); margin-top:20px; font-size:15px">Esta pantalla se reinicia automáticamente…</div>
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <div style="font-size:84px; margin-bottom:10px">🎁</div>
+      <h1>¡Tu premio!</h1>
+      <div class="codigo-premio" id="codigo-premio"></div>
+      <p class="sub">Tu personaje queda liberado para el próximo<br>aventurero del tour BN Mastercard.</p>
+      <p style="color:var(--text-soft); margin-top:18px; font-size:14px">Esta pantalla se reinicia automáticamente…</p>
+    </div>
+  </div>
+</div>
+
+<div class="brand-bottom">
+  <div class="brand-left">
+    <img src="/img/brand/mastercard.svg" alt="Mastercard" style="height:24px">
+    <span style="color:var(--bn-navy); opacity:.4">|</span>
+    <img src="/img/brand/bn-logo.svg" alt="BN" style="height:26px">
+  </div>
+  <div class="brand-spacer"></div>
+  <span class="brand-tagline">Para todo, <em>todos los días.</em></span>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -92,6 +159,15 @@ async function identificar(p) {
     sesionActual = await api('POST', '/totem/login', { personaje_id: p.id });
     document.getElementById('resumen-avatar').textContent = sesionActual.avatar;
     document.getElementById('resumen-usuario').textContent = sesionActual.usuario.split(' ')[0];
+    // Emoji del antojo si está disponible en visitas
+    const antojo = (sesionActual.visitadas || [])
+      .find(v => v.codigo === 'e5' && v.detalle && /Antojo:/i.test(v.detalle));
+    if (antojo) {
+      const m = antojo.detalle.match(/Antojo:\s*([^|]+)/i);
+      const nom = m ? m[1].trim() : '';
+      const map = { 'Carne': '🥩', 'Italiana': '🍝', 'Comida rápida': '🍔', 'Mariscos': '🦐' };
+      document.getElementById('polaroid-emoji').textContent = map[nom] || '🦐';
+    }
     mostrarPantalla('pantalla-resumen');
   } catch (err) { toast(err.message); await cargarPersonajes(); }
 }
@@ -101,7 +177,8 @@ function volverAPersonajes() {
   mostrarPantalla('pantalla-personajes');
 }
 
-async function reclamarPremio(e) {  e.preventDefault();
+async function reclamarPremio(e) {
+  e.preventDefault();
   if (!sesionActual) return;
   const pin = document.getElementById('campo-pin-staff').value;
   try {

@@ -1,15 +1,33 @@
 const { db } = require('./db');
 
+const NOMBRES_ESTACIONES = {
+  e1: 'Supermercado',
+  e2: 'Farmacia',
+  e3: 'Veterinaria',
+  e4: 'Gasolina',
+  e5: 'Restaurantes'
+};
+
 function seed() {
   const estaciones = db.prepare('SELECT COUNT(*) AS n FROM estaciones').get();
   if (estaciones.n === 0) {
     const ins = db.prepare('INSERT INTO estaciones (codigo, nombre, orden, tipo, puntos) VALUES (?, ?, ?, ?, ?)');
     ins.run('registro', 'Registro', 0, 'registro', 0);
-    for (let i = 1; i <= 5; i++) {
-      ins.run(`e${i}`, `Estación ${i}`, i, 'estacion', 100);
-    }
+    ins.run('e1', NOMBRES_ESTACIONES.e1, 1, 'estacion', 100);
+    ins.run('e2', NOMBRES_ESTACIONES.e2, 2, 'estacion', 100);
+    ins.run('e3', NOMBRES_ESTACIONES.e3, 3, 'estacion', 100);
+    ins.run('e4', NOMBRES_ESTACIONES.e4, 4, 'estacion', 100);
+    ins.run('e5', NOMBRES_ESTACIONES.e5, 5, 'estacion', 100);
     ins.run('final', 'Entrega de Premio', 6, 'final', 0);
     console.log('Estaciones creadas');
+  } else {
+    const update = db.prepare("UPDATE estaciones SET nombre = ? WHERE codigo = ?");
+    update.run(NOMBRES_ESTACIONES.e1, 'e1');
+    update.run(NOMBRES_ESTACIONES.e2, 'e2');
+    update.run(NOMBRES_ESTACIONES.e3, 'e3');
+    update.run(NOMBRES_ESTACIONES.e4, 'e4');
+    update.run(NOMBRES_ESTACIONES.e5, 'e5');
+    console.log('Nombres de estaciones actualizados');
   }
 
   const personajes = db.prepare('SELECT COUNT(*) AS n FROM personajes').get();

@@ -7,61 +7,138 @@
 <link rel="stylesheet" href="/css/fonts.css">
 <link rel="stylesheet" href="/css/tour.css">
 <style>
-  body { overflow: auto; }
-  .panel { padding: 80px 32px 32px; max-width: 1280px; margin: 0 auto; }
-  .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-  .tab { background: var(--card); border-radius: 12px; color: var(--muted); cursor: pointer; font-size: 16px; font-weight: 700; padding: 12px 26px; transition: .2s; }
-  .tab.activa { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
-  .tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
-  .tarjeta-metrica { background: var(--card); border-radius: 16px; padding: 18px; }
-  .tarjeta-metrica .valor { font-size: 34px; font-weight: 800; color: var(--accent2); }
-  .tarjeta-metrica .etiqueta { color: var(--muted); font-size: 13px; margin-top: 2px; }
-  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 16px; overflow: hidden; }
-  th { background: var(--bg2); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; padding: 12px 14px; text-align: left; }
-  td { border-top: 1px solid rgba(255,255,255,.06); font-size: 15px; padding: 12px 14px; vertical-align: middle; }
-  tr.detalle td { background: var(--bg2); }
-  .barra-progreso { background: var(--bg); border-radius: 999px; height: 8px; width: 110px; }
-  .barra-progreso > div { background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 999px; height: 100%; }
-  .badge-ubicacion { background: rgba(0,179,227,.25); border-radius: 999px; font-weight: 700; padding: 5px 14px; white-space: nowrap; }
-  .badge-estado { border-radius: 999px; font-size: 13px; font-weight: 700; padding: 4px 12px; }
-  .estado-activa { background: rgba(0,179,227,.15); color: var(--accent2); }
-  .estado-completada { background: rgba(68,145,0,.25); color: var(--ok); }
-  .estado-expirada, .estado-abandonada { background: rgba(243,156,18,.15); color: var(--warn); }
-  .fila-herramientas { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
-  .boton.mini { font-size: 15px; padding: 10px 18px; }
-  h2.seccion { font-size: 18px; letter-spacing: 1.5px; margin: 26px 0 12px; text-transform: uppercase; color: var(--muted); }
-  .modal-fondo { align-items: center; background: rgba(0,0,0,.6); display: none; height: 100vh; justify-content: center; left: 0; position: fixed; top: 0; width: 100vw; z-index: 50; }
+  body { overflow: auto; background: var(--bg); color: var(--text); }
+  .dash-shell { padding: 84px 22px 32px; max-width: 1280px; margin: 0 auto; }
+  .tabs { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+  .tab {
+    background: #fff; border: 1px solid var(--card-border);
+    border-radius: var(--radius-pill); color: var(--text-soft);
+    cursor: pointer; font-family: 'Nunito', sans-serif;
+    font-size: 15px; font-weight: 800;
+    padding: 10px 22px; transition: .2s;
+  }
+  .tab.activa {
+    background: var(--bn-navy); color: #fff; border-color: var(--bn-navy);
+  }
+  .tarjetas { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .tarjeta-metrica {
+    background: #fff; border-radius: var(--radius-card); padding: 20px;
+    box-shadow: var(--card-shadow);
+    border-top: 4px solid var(--bn-lime);
+  }
+  .tarjeta-metrica:nth-child(2) { border-top-color: var(--bn-blue); }
+  .tarjeta-metrica:nth-child(3) { border-top-color: var(--bn-green-deep); }
+  .tarjeta-metrica:nth-child(4) { border-top-color: var(--bn-navy); }
+  .tarjeta-metrica .valor {
+    font-family: 'Nunito', sans-serif;
+    font-size: 36px; font-weight: 800; color: var(--bn-navy);
+    line-height: 1;
+  }
+  .tarjeta-metrica .etiqueta {
+    color: var(--text-soft); font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: .04em;
+    margin-top: 6px;
+  }
+  table {
+    width: 100%; border-collapse: collapse;
+    background: #fff; border-radius: var(--radius-card);
+    overflow: hidden; box-shadow: var(--card-shadow);
+  }
+  th {
+    background: #f3f6fc; color: var(--text-soft);
+    font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    padding: 12px 14px; text-align: left; font-weight: 800;
+  }
+  td {
+    border-top: 1px solid var(--card-border);
+    font-size: 14px; padding: 12px 14px; vertical-align: middle;
+    color: var(--bn-navy);
+  }
+  tr.detalle td { background: #f7faff; font-size: 13px; }
+  .barra-progreso { background: #e8edf7; border-radius: var(--radius-pill); height: 8px; width: 110px; overflow: hidden; }
+  .barra-progreso > div {
+    background: linear-gradient(90deg, var(--bn-blue), var(--bn-lime));
+    border-radius: var(--radius-pill); height: 100%;
+  }
+  .badge-ubicacion {
+    background: rgba(0,179,227,.12); color: #006a8c;
+    border-radius: var(--radius-pill); font-weight: 700;
+    padding: 5px 14px; white-space: nowrap; font-size: 13px;
+  }
+  .badge-estado { border-radius: var(--radius-pill); font-size: 11px; font-weight: 800; padding: 4px 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .estado-activa { background: rgba(0,179,227,.15); color: #006a8c; }
+  .estado-completada { background: rgba(68,145,0,.15); color: #2d6a00; }
+  .estado-expirada { background: rgba(187,197,59,.2); color: #6a6f1c; }
+  .estado-abandonada { background: rgba(231,76,60,.15); color: #a8281a; }
+  .fila-herramientas { align-items: center; display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+  .boton.mini { font-size: 14px; padding: 10px 18px; }
+  h2.seccion {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; letter-spacing: .06em; font-weight: 800;
+    margin: 24px 0 12px; text-transform: uppercase; color: var(--text-soft);
+  }
+  .modal-fondo {
+    align-items: center; background: rgba(20, 48, 110, .45);
+    display: none; height: 100vh; justify-content: center;
+    left: 0; position: fixed; top: 0; width: 100vw; z-index: 50;
+  }
   .modal-fondo.abierto { display: flex; }
+  .modal-card {
+    background: #fff; border-radius: var(--radius);
+    padding: 28px; width: min(420px, 92vw);
+    box-shadow: var(--card-shadow-hover);
+  }
   .fila-historial { cursor: pointer; }
-  .fila-historial:hover { background: var(--card-hover); }
-  .detalle-visitas { color: var(--muted); font-size: 14px; line-height: 1.9; }
-  .detalle-visitas b { color: var(--text); }
-  .pulso { animation: pulso 2s infinite; color: var(--ok); font-size: 13px; }
+  .fila-historial:hover td { background: #f7faff; }
+  .detalle-visitas { color: var(--text-soft); font-size: 14px; line-height: 1.9; }
+  .detalle-visitas b { color: var(--bn-navy); }
+  .pulso {
+    animation: pulso 2s infinite; color: var(--ok);
+    font-size: 13px; font-weight: 800;
+  }
   @keyframes pulso { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+  .filtro-select {
+    background: #fff; border: 1px solid var(--card-border);
+    border-radius: var(--radius-pill); color: var(--bn-navy);
+    font-family: 'Nunito', sans-serif; font-weight: 700;
+    font-size: 14px; padding: 10px 18px; cursor: pointer;
+  }
 </style>
 </head>
 <body>
 
-<div class="barra-superior" style="background:rgba(10,26,56,.9)">
+<div class="brand-top">
+  <div class="brand-left">
+    <img src="/img/brand/bn-logo.svg" alt="BN" style="height:30px">
+  </div>
+  <div class="brand-spacer"></div>
+  <span class="brand-tagline">Para todo, <em>todos los días.</em></span>
+</div>
+
+<div class="barra-superior">
   <div class="barra-titulo">Dashboard del Tour <span class="pulso">● EN VIVO</span></div>
   <div class="estado-conexion online">En línea</div>
-  <button class="boton mini secundario" onclick="abrirAjustes()">Ajustes</button>
+  <button class="boton-ajustes" onclick="abrirAjustes()">⚙ Ajustes</button>
 </div>
 
 <div id="pantalla-pin" class="screen activa">
-  <h1>Acceso staff</h1>
-  <p class="subtitulo">Ingresa el PIN para ver el dashboard</p>
-  <form class="tarjeta-forma" id="forma-pin">
-    <input type="password" id="campo-pin" placeholder="PIN" inputmode="numeric" maxlength="12" required style="text-align:center; font-size:24px; letter-spacing:8px">
-    <button type="submit" class="boton">Entrar</button>
-  </form>
+  <div class="frame frame-blue">
+    <div class="panel-blanco" style="text-align:center">
+      <h1>Acceso staff</h1>
+      <p class="sub">Ingresa el PIN para ver el dashboard.</p>
+      <form class="tarjeta-forma" id="forma-pin" style="background:transparent; box-shadow:none; padding:0; align-items:center">
+        <input type="password" id="campo-pin" placeholder="PIN" inputmode="numeric" maxlength="12" required style="text-align:center; font-size:24px; letter-spacing:8px; width:280px">
+        <button type="submit" class="boton primario-azul" style="width:280px">Entrar</button>
+      </form>
+    </div>
+  </div>
 </div>
 
-<div id="pantalla-panel" class="panel" style="display:none">
+<div id="pantalla-panel" class="dash-shell" style="display:none">
   <div class="tabs">
     <button class="tab activa" id="tab-vivo" onclick="cambiarTab('vivo')">En vivo</button>
     <button class="tab" id="tab-historial" onclick="cambiarTab('historial')">Historial completo</button>
-    <button class="boton mini secundario" style="margin-left:auto" onclick="exportarCSV()">Exportar CSV</button>
+    <button class="boton mini secundario" style="margin-left:auto" onclick="exportarCSV()">⬇ Exportar CSV</button>
   </div>
 
   <div id="vista-vivo">
@@ -82,14 +159,14 @@
 
   <div id="vista-historial" style="display:none">
     <div class="fila-herramientas">
-      <select id="filtro-estado" onchange="pintarHistorial()" style="background:var(--card);border:none;border-radius:10px;color:var(--text);font-size:15px;padding:10px 14px">
+      <select id="filtro-estado" class="filtro-select" onchange="pintarHistorial()">
         <option value="">Todos los estados</option>
         <option value="activa">Activos</option>
         <option value="completada">Completados</option>
         <option value="expirada">Expirados</option>
         <option value="abandonada">Abandonados</option>
       </select>
-      <span style="color:var(--muted);font-size:14px" id="contador-historial"></span>
+      <span style="color:var(--text-soft);font-size:14px; font-weight:700" id="contador-historial"></span>
     </div>
     <table id="tabla-historial">
       <thead><tr><th></th><th>Usuario</th><th>Contacto</th><th>Personaje</th><th>Estado</th><th>Puntos</th><th>Estaciones hechas</th><th>Inicio</th><th>Fin</th><th>Premio</th></tr></thead>
@@ -99,15 +176,27 @@
 </div>
 
 <div class="modal-fondo" id="modal-ajustes">
-  <form class="tarjeta-forma" onsubmit="guardarAjustes(event)">
-    <h1 style="font-size:22px">Ajustes</h1>
-    <label style="color:var(--muted); font-size:14px">PIN de staff</label>
+  <form class="modal-card" onsubmit="guardarAjustes(event)">
+    <h1 style="font-size:22px; text-align:center">Ajustes</h1>
+    <label style="color:var(--text-soft); font-size:13px; font-weight:700">PIN de staff</label>
     <input type="text" id="ajuste-pin" maxlength="12" inputmode="numeric">
-    <label style="color:var(--muted); font-size:14px">Timeout de sesión (minutos)</label>
+    <label style="color:var(--text-soft); font-size:13px; font-weight:700">Timeout de sesión (minutos)</label>
     <input type="number" id="ajuste-timeout" min="1" max="240">
-    <button type="submit" class="boton">Guardar</button>
-    <button type="button" class="boton secundario" onclick="document.getElementById('modal-ajustes').classList.remove('abierto')">Cerrar</button>
+    <div style="display:flex; gap:10px; margin-top:8px">
+      <button type="submit" class="boton primario-azul" style="flex:1">Guardar</button>
+      <button type="button" class="boton secundario" style="flex:1" onclick="document.getElementById('modal-ajustes').classList.remove('abierto')">Cerrar</button>
+    </div>
   </form>
+</div>
+
+<div class="brand-bottom">
+  <div class="brand-left">
+    <img src="/img/brand/mastercard.svg" alt="Mastercard" style="height:24px">
+    <span style="color:var(--bn-navy); opacity:.4">|</span>
+    <img src="/img/brand/bn-logo.svg" alt="BN" style="height:26px">
+  </div>
+  <div class="brand-spacer"></div>
+  <span class="brand-tagline">Para todo, <em>todos los días.</em></span>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>

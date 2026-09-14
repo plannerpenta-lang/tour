@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 60" role="img" aria-label="Banco Nacional">
+  <g fill="#14306E">
+    <!-- "BN" wordmark con el paralelogramo distintivo -->
+    <path d="M2 8 L26 8 L18 52 L-6 52 Z" opacity=".0"/>
+    <text x="0" y="44" font-family="Nunito, Inter, sans-serif" font-weight="800" font-size="42" fill="#14306E" letter-spacing="-1">BN</text>
+    <!-- Acento lime como paralelogramo bajo la B -->
+    <path d="M3 48 L18 48 L20 56 L5 56 Z" fill="#A8D82C"/>
+    <!-- Acento navy como paralelogramo bajo la N -->
+    <path d="M22 48 L37 48 L39 56 L24 56 Z" fill="#14306E"/>
+  </g>
+  <text x="44" y="28" font-family="Nunito, Inter, sans-serif" font-weight="700" font-size="11" fill="#14306E">Para todo,</text>
+  <text x="44" y="44" font-family="Nunito, Inter, sans-serif" font-weight="800" font-size="13" fill="#14306E">todos los días.</text>
+</svg>

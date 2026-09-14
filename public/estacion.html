@@ -9,6 +9,14 @@
 </head>
 <body>
 
+<div class="brand-top">
+  <div class="brand-left">
+    <img src="/img/brand/bn-logo.svg" alt="BN" style="height:30px">
+  </div>
+  <div class="brand-spacer"></div>
+  <span class="brand-tagline">Para todo, <em>todos los días.</em></span>
+</div>
+
 <div class="barra-superior">
   <div class="barra-titulo" id="titulo-estacion">Estación</div>
   <div class="barra-paso" id="paso-estacion"></div>
@@ -16,136 +24,279 @@
   <div class="estado-conexion online">En línea</div>
 </div>
 
+<!-- ============================================================
+     Pantalla: Bienvenida / Selección de personaje
+     ============================================================ -->
 <div id="pantalla-personajes" class="screen activa">
-  <h1 id="bienvenida-titulo">¿Quién eres?</h1>
-  <p class="subtitulo">Toca tu personaje para continuar el recorrido</p>
-  <div class="grid-personajes" id="grid-personajes"></div>
+  <div class="frame frame-green">
+    <div class="panel-blanco">
+      <h1>¿Quién eres?</h1>
+      <p class="sub">Toca tu personaje para continuar el recorrido.</p>
+      <div class="grid-personajes" id="grid-personajes" style="margin: 6px auto 4px"></div>
+    </div>
+  </div>
 </div>
 
+<!-- ============================================================
+     Pantalla: Sesión genérica (visitadas)
+     ============================================================ -->
 <div id="pantalla-sesion" class="screen">
-  <div class="avatar-hero" id="sesion-avatar"></div>
-  <h1>¡Hola, <span id="sesion-usuario"></span>!</h1>
-  <p class="subtitulo"><span id="sesion-progreso"></span></p>
-  <button class="boton grande" id="boton-visita" onclick="registrarVisita()">✓ Confirmar</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
-  <button class="boton secundario" style="margin-top:10px; width:min(480px,90vw); font-size:15px; opacity:.7"
-    onclick="liberarSesion(sesionActual.sesion_id ?? sesionActual.id, '¿Salir del tour? Tu personaje quedará libre para otros usuarios.')">
-    Salir del tour (liberar mi personaje)</button>
-</div>
-
-<div id="pantalla-mascotas1" class="screen">
-  <div class="avatar-hero" id="vet-avatar" style="font-size:50px"></div>
-  <h1 id="vet-saludo"></h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Tienes mascotas en el hogar?</p>
-  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
-    <button class="boton grande" style="width:100%" onclick="responderVet1('Sí')">Sí</button>
-    <button class="boton grande" style="width:100%" onclick="responderVet1('No')">No</button>
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <div class="avatar-hero" id="sesion-avatar"></div>
+      <h1>¡Hola, <span id="sesion-usuario"></span>!</h1>
+      <p class="sub"><span id="sesion-progreso"></span></p>
+      <div class="mini-stack" style="margin-top:14px">
+        <button class="boton primario-azul" id="boton-visita" onclick="registrarVisita()">✓ Confirmar</button>
+        <button class="boton secundario" onclick="volverAPersonajes()">No soy yo ←</button>
+        <button class="boton secundario" style="font-size:14px; opacity:.75"
+          onclick="liberarSesion(sesionActual.sesion_id ?? sesionActual.id, '¿Salir del tour? Tu personaje quedará libre para otros usuarios.')">
+          Salir del tour (liberar mi personaje)</button>
+      </div>
+    </div>
   </div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
 </div>
 
-<div id="pantalla-mascotas2" class="screen">
-  <h1>Segunda pregunta</h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Por qué visitas normalmente la veterinaria?</p>
-  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
-    <button class="boton grande" style="width:100%" onclick="responderVet2('Compra de alimentos')">Compra de alimentos</button>
-    <button class="boton grande" style="width:100%" onclick="responderVet2('Citas de control')">Citas de control</button>
-    <button class="boton grande" style="width:100%" onclick="responderVet2('Grooming')">Grooming</button>
-  </div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-mascotas1')">Volver ←</button>
-</div>
-
-<div id="pantalla-vehiculos1" class="screen">
-  <div class="avatar-hero" id="gas-avatar" style="font-size:50px"></div>
-  <h1 id="gas-saludo"></h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Tienes vehículos en tu hogar?</p>
-  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
-    <button class="boton grande" style="width:100%" onclick="responderGas1('Sí')">Sí</button>
-    <button class="boton grande" style="width:100%" onclick="responderGas1('No')">No</button>
-  </div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
-</div>
-
-<div id="pantalla-vehiculos2" class="screen">
-  <h1>Segunda pregunta</h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Qué tipo de vehículo tienes?</p>
-  <div id="grid-gas-tipos" style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)"></div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-vehiculos1')">Volver ←</button>
-</div>
-
-<div id="pantalla-vehiculos3" class="screen">
-  <h1>Tercera pregunta</h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">En un mes, ¿cuánto gastas aproximadamente en combustible?</p>
-  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
-    <button class="boton grande" style="width:100%" onclick="responderGas3('₡0 – ₡20.000')">₡0 – ₡20.000</button>
-    <button class="boton grande" style="width:100%" onclick="responderGas3('₡20.001 – ₡30.000')">₡20.001 – ₡30.000</button>
-    <button class="boton grande" style="width:100%" onclick="responderGas3('Más de ₡30.000')">Más de ₡30.000</button>
-  </div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-vehiculos2')">Volver ←</button>
-</div>
-
+<!-- ============================================================
+     E1 · SUPERMERCADO (despensa) — marco verde
+     ============================================================ -->
 <div id="pantalla-despensa" class="screen">
-  <div class="avatar-hero" id="desp-avatar" style="font-size:50px"></div>
-  <h1 id="desp-saludo"></h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Cuáles de estos productos normalmente forman parte de tu alacena?</p>
-  <div id="grid-despensa" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
-  <p style="color:var(--muted); margin-top:14px" id="desp-count"></p>
-  <button class="boton grande" id="boton-desp-confirmar" onclick="confirmarDesp()" style="margin-top:10px" disabled>Confirmar</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
+  <div class="frame frame-green">
+    <div class="panel-blanco">
+      <div class="avatar-hero" id="desp-avatar" style="font-size:64px"></div>
+      <h1 id="desp-saludo">¡Hola!</h1>
+      <p class="sub">¿Cuáles de estos productos normalmente<br>forman parte de tu alacena?</p>
+      <div id="grid-despensa" class="grid-opciones grid-3"></div>
+      <p id="desp-count" class="sub" style="margin-top:14px">Toca los productos para seleccionarlos.</p>
+      <div class="mini-stack" style="margin-top:10px">
+        <button class="boton primario-azul" id="boton-desp-confirmar" onclick="confirmarDesp()" disabled>Continuar</button>
+        <button class="boton secundario" onclick="volverAPersonajes()">No soy yo ←</button>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- ============================================================
+     E2 · FARMACIA Q1 — marco azul
+     ============================================================ -->
 <div id="pantalla-farm1" class="screen">
-  <div class="avatar-hero" id="farm-avatar" style="font-size:50px"></div>
-  <h1 id="farm-saludo"></h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Qué compras normalmente en las farmacias?</p>
-  <div class="step-dots"><span class="activo"></span><span></span></div>
-  <div id="grid-farm1" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
-  <p style="color:var(--muted); margin-top:14px" id="farm1-count"></p>
-  <button class="boton grande" id="boton-farm1" onclick="irFarm2()" style="margin-top:10px" disabled>Continuar</button>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
+  <div class="frame frame-blue">
+    <div class="panel-blanco">
+      <div class="avatar-hero" id="farm-avatar" style="font-size:64px"></div>
+      <span class="numero">1.</span>
+      <h2>Farmacia</h2>
+      <p class="sub">¿Qué compras normalmente<br>en las farmacias?</p>
+      <div class="step-dots"><span class="activo"></span><span></span></div>
+      <div id="grid-farm1" class="grid-opciones grid-2"></div>
+      <p id="farm1-count" class="sub" style="margin-top:14px">Selecciona una o varias opciones.</p>
+      <div class="mini-stack" style="margin-top:10px">
+        <button class="boton primario-azul" id="boton-farm1" onclick="irFarm2()" disabled>Continuar</button>
+        <button class="boton secundario" onclick="volverAPersonajes()">No soy yo ←</button>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- ============================================================
+     E2 · FARMACIA Q2 — marco azul
+     ============================================================ -->
 <div id="pantalla-farm2" class="screen">
-  <h1>Segunda pregunta</h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">En un mes, ¿cuánto gastas aproximadamente en farmacia?</p>
-  <div id="grid-farm2" style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)"></div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-farm1')">Volver ←</button>
+  <div class="frame frame-blue">
+    <div class="panel-blanco">
+      <span class="numero">2.</span>
+      <h2>Farmacia</h2>
+      <p class="sub">En un mes, ¿cuánto gastas<br>aproximadamente en farmacia?</p>
+      <div class="step-dots"><span class="completado"></span><span class="activo"></span></div>
+      <div id="grid-farm2" class="grid-opciones grid-2" style="grid-template-columns:1fr; max-width:520px; gap:18px"></div>
+      <div class="mini-stack" style="margin-top:14px">
+        <button class="boton secundario" onclick="mostrarPantalla('pantalla-farm1')">← Volver</button>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- ============================================================
+     E3 · VETERINARIA Q1 — marco verde
+     ============================================================ -->
+<div id="pantalla-mascotas1" class="screen">
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <div class="avatar-hero" id="vet-avatar" style="font-size:64px"></div>
+      <span class="numero">1.</span>
+      <h2>Veterinaria</h2>
+      <p class="sub">¿Tienes mascotas en el hogar?</p>
+      <div class="grid-opciones grid-2" style="max-width:520px; margin: 12px auto 0">
+        <button class="opcion-card" onclick="responderVet1('Sí')">
+          <span class="opcion-icono">🐾</span>
+          <span class="opcion-label">Sí</span>
+        </button>
+        <button class="opcion-card" onclick="responderVet1('No')">
+          <span class="opcion-icono">🚫</span>
+          <span class="opcion-label">No</span>
+        </button>
+      </div>
+      <div class="mini-stack" style="margin-top:18px">
+        <button class="boton secundario" onclick="volverAPersonajes()">No soy yo ←</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     E3 · VETERINARIA Q2 — marco verde
+     ============================================================ -->
+<div id="pantalla-mascotas2" class="screen">
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <span class="numero">2.</span>
+      <h2>Veterinaria</h2>
+      <p class="sub">¿Por qué visitas normalmente<br>la veterinaria?</p>
+      <div class="grid-opciones" style="grid-template-columns:1fr; max-width:520px; gap:18px; margin: 14px auto 0" id="grid-vet-motivos"></div>
+      <div class="mini-stack" style="margin-top:18px">
+        <button class="boton secundario" onclick="mostrarPantalla('pantalla-mascotas1')">← Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     E4 · GASOLINA Q1 — marco azul
+     ============================================================ -->
+<div id="pantalla-vehiculos1" class="screen">
+  <div class="frame frame-blue">
+    <div class="panel-blanco" style="text-align:center">
+      <div class="avatar-hero" id="gas-avatar" style="font-size:64px"></div>
+      <span class="numero">1.</span>
+      <h2>Gasolina</h2>
+      <p class="sub">¿Tienes vehículos en tu hogar?</p>
+      <div class="grid-opciones grid-2" style="max-width:520px; margin: 12px auto 0">
+        <button class="opcion-card" onclick="responderGas1('Sí')">
+          <span class="opcion-icono">🚗</span>
+          <span class="opcion-label">Sí</span>
+        </button>
+        <button class="opcion-card" onclick="responderGas1('No')">
+          <span class="opcion-icono">🚫</span>
+          <span class="opcion-label">No</span>
+        </button>
+      </div>
+      <div class="mini-stack" style="margin-top:18px">
+        <button class="boton secundario" onclick="volverAPersonajes()">No soy yo ←</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     E4 · GASOLINA Q2 — marco azul
+     ============================================================ -->
+<div id="pantalla-vehiculos2" class="screen">
+  <div class="frame frame-blue">
+    <div class="panel-blanco" style="text-align:center">
+      <span class="numero">2.</span>
+      <h2>Gasolina</h2>
+      <p class="sub">¿Qué tipo de vehículo tienes?</p>
+      <div id="grid-gas-tipos" class="grid-opciones" style="grid-template-columns:repeat(2,1fr); gap:18px; max-width:560px; margin: 14px auto 0"></div>
+      <div class="mini-stack" style="margin-top:18px">
+        <button class="boton secundario" onclick="mostrarPantalla('pantalla-vehiculos1')">← Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     E4 · GASOLINA Q3 — marco azul
+     ============================================================ -->
+<div id="pantalla-vehiculos3" class="screen">
+  <div class="frame frame-blue">
+    <div class="panel-blanco" style="text-align:center">
+      <span class="numero">3.</span>
+      <h2>Gasolina</h2>
+      <p class="sub">En un mes, ¿cuánto gastas<br>aproximadamente en combustible?</p>
+      <div id="grid-gas-rangos" class="grid-opciones" style="grid-template-columns:1fr; max-width:520px; gap:18px; margin: 14px auto 0"></div>
+      <div class="mini-stack" style="margin-top:18px">
+        <button class="boton secundario" onclick="mostrarPantalla('pantalla-vehiculos2')">← Volver</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     E5 · RESTAURANTES Q1 — marco verde
+     ============================================================ -->
 <div id="pantalla-rest1" class="screen">
-  <div class="avatar-hero" id="rest-avatar" style="font-size:50px"></div>
-  <h1 id="rest-saludo"></h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">¿Cuántas veces al mes sales a comer fuera?</p>
-  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
-    <button class="boton grande" style="width:100%" onclick="irRest2('1 vez')">1 vez</button>
-    <button class="boton grande" style="width:100%" onclick="irRest2('2 – 3 veces')">2 – 3 veces</button>
-    <button class="boton grande" style="width:100%" onclick="irRest2('4 – 5 veces')">4 – 5 veces</button>
-    <button class="boton grande" style="width:100%" onclick="irRest2('Más de 5 veces')">Más de 5 veces</button>
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <div class="avatar-hero" id="rest-avatar" style="font-size:64px"></div>
+      <span class="numero">1.</span>
+      <h2>Restaurantes</h2>
+      <p class="sub">¿Cuántas veces al mes<br>sales a comer fuera?</p>
+      <div id="grid-rest-frecuencia" class="grid-opciones" style="grid-template-columns:1fr; max-width:520px; gap:14px; margin: 12px auto 0"></div>
+      <div class="mini-stack" style="margin-top:18px">
+        <button class="boton secundario" onclick="volverAPersonajes()">No soy yo ←</button>
+      </div>
+    </div>
   </div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="volverAPersonajes()">No soy yo ←</button>
 </div>
 
+<!-- ============================================================
+     E5 · RESTAURANTES Q2 — marco verde
+     ============================================================ -->
 <div id="pantalla-rest2" class="screen">
-  <h1>Segunda pregunta</h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">Normalmente, ¿cuánto gastas en una comida?</p>
-  <div style="display:flex; flex-direction:column; gap:14px; width:min(560px,92vw)">
-    <button class="boton grande" style="width:100%" onclick="irRest3('₡0 – ₡20.000')">₡0 – ₡20.000</button>
-    <button class="boton grande" style="width:100%" onclick="irRest3('₡20.001 – ₡30.000')">₡20.001 – ₡30.000</button>
-    <button class="boton grande" style="width:100%" onclick="irRest3('Más de ₡30.000')">Más de ₡30.000</button>
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <span class="numero">2.</span>
+      <h2>Restaurantes</h2>
+      <p class="sub">Normalmente, ¿cuánto gastas<br>en una comida?</p>
+      <div id="grid-rest-gasto" class="grid-opciones" style="grid-template-columns:1fr; max-width:520px; gap:18px; margin: 14px auto 0"></div>
+      <div class="mini-stack" style="margin-top:18px">
+        <button class="boton secundario" onclick="mostrarPantalla('pantalla-rest1')">← Volver</button>
+      </div>
+    </div>
   </div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-rest1')">Volver ←</button>
 </div>
 
+<!-- ============================================================
+     E5 · RESTAURANTES Q3 — marco verde
+     ============================================================ -->
 <div id="pantalla-rest3" class="screen">
-  <h1>Tercera pregunta</h1>
-  <p class="subtitulo" style="font-size:22px; color:var(--text)">Hoy, ¿qué quieres comer?</p>
-  <div id="grid-rest3" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; width:min(900px,94vw)"></div>
-  <button class="boton secundario" style="margin-top:14px; width:min(480px,90vw)" onclick="mostrarPantalla('pantalla-rest2')">Volver ←</button>
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <span class="numero">3.</span>
+      <h2>Restaurantes</h2>
+      <p class="sub">Hoy, ¿qué quieres comer?</p>
+      <div id="grid-rest3" class="grid-opciones grid-4"></div>
+      <div class="mini-stack" style="margin-top:18px">
+        <button class="boton secundario" onclick="mostrarPantalla('pantalla-rest2')">← Volver</button>
+      </div>
+    </div>
+  </div>
 </div>
 
+<!-- ============================================================
+     Pantalla: éxito (transición entre estaciones)
+     ============================================================ -->
 <div id="pantalla-exito" class="screen">
-  <h1 id="exito-titulo">¡Visita registrada!</h1>
-  <p class="subtitulo" id="exito-sub">Sigue a la siguiente estación del tour</p>
+  <div class="frame frame-green">
+    <div class="panel-blanco" style="text-align:center">
+      <div style="font-size:84px; margin-bottom:10px">✅</div>
+      <h1 id="exito-titulo">¡Visita registrada!</h1>
+      <p class="sub" id="exito-sub">Sigue a la siguiente estación del tour.</p>
+      <div id="cuenta-regresiva" class="cuenta-regresiva" style="display:none">
+        <div class="cuenta-circulo"><span id="cuenta-numero">3</span></div>
+        <span class="cuenta-label" id="cuenta-label">volviendo al inicio…</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="brand-bottom">
+  <div class="brand-left">
+    <img src="/img/brand/mastercard.svg" alt="Mastercard" style="height:24px">
+    <span style="color:var(--bn-navy); opacity:.4">|</span>
+    <img src="/img/brand/bn-logo.svg" alt="BN" style="height:26px">
+  </div>
+  <div class="brand-spacer"></div>
+  <span class="brand-tagline">Para todo, <em>todos los días.</em></span>
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
@@ -157,6 +308,42 @@ let estacion = null;
 let sesionActual = null;
 let totalEstaciones = 6;
 let codigoAnterior = 'registro';
+
+function mostrarCuentaRegresiva(segundos, callback, label = 'volviendo al inicio…') {
+  const cont = document.getElementById('cuenta-regresiva');
+  const num = document.getElementById('cuenta-numero');
+  const lbl = document.getElementById('cuenta-label');
+  const cir = cont.querySelector('.cuenta-circulo');
+  cont.style.display = 'flex';
+  cont.classList.remove('cuenta-tin');
+  cir.classList.remove('cuenta-numero-anim');
+  lbl.textContent = label;
+  let n = Math.max(1, segundos | 0);
+  num.textContent = n;
+  void cir.offsetWidth;
+  cir.classList.add('cuenta-numero-anim');
+  const id = setInterval(() => {
+    n--;
+    if (n > 0) {
+      num.textContent = n;
+      cir.classList.remove('cuenta-numero-anim');
+      void cir.offsetWidth;
+      cir.classList.add('cuenta-numero-anim');
+    } else {
+      clearInterval(id);
+      cont.classList.add('cuenta-tin');
+      setTimeout(callback, 450);
+    }
+  }, 1000);
+}
+
+const FRAME_POR_ESTACION = {
+  e1: 'frame-green',
+  e2: 'frame-blue',
+  e3: 'frame-green',
+  e4: 'frame-blue',
+  e5: 'frame-green'
+};
 
 async function iniciar() {
   try {
@@ -172,6 +359,7 @@ async function iniciar() {
     codigoAnterior = anterior ? anterior.codigo : null;
     document.getElementById('titulo-estacion').textContent = estacion.nombre;
     document.getElementById('paso-estacion').textContent = `Paso ${estacion.orden} de ${lista.length - 2}`;
+    document.body.classList.add('estacion-' + CODIGO);
     await cargarPersonajes();
   } catch { toast('Error de conexión con el servidor'); }
 }
@@ -210,6 +398,11 @@ async function cargarPersonajes() {
 async function identificar(p) {
   try {
     sesionActual = await api('POST', '/totem/login', { personaje_id: p.id });
+    if (sesionActual.avatar) {
+      document.getElementById('ident-emoji').textContent = sesionActual.avatar;
+      document.getElementById('ident-nombre').textContent = sesionActual.usuario;
+      document.getElementById('identidad-sticky').classList.add('visible');
+    }
     const yaVisito = sesionActual.visitadas.some(v => v.codigo === CODIGO);
     if (yaVisito) {
       document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
@@ -229,22 +422,21 @@ async function identificar(p) {
       mostrarPantalla('pantalla-despensa');
     } else if (CODIGO === 'e2') {
       document.getElementById('farm-avatar').textContent = sesionActual.avatar;
-      document.getElementById('farm-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       cargarFarm1();
       mostrarPantalla('pantalla-farm1');
     } else if (CODIGO === 'e3') {
       document.getElementById('vet-avatar').textContent = sesionActual.avatar;
-      document.getElementById('vet-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
+      cargarVet2();
       mostrarPantalla('pantalla-mascotas1');
     } else if (CODIGO === 'e4') {
       document.getElementById('gas-avatar').textContent = sesionActual.avatar;
-      document.getElementById('gas-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
+      cargarGas2();
       mostrarPantalla('pantalla-vehiculos1');
     } else if (CODIGO === 'e5') {
       document.getElementById('rest-avatar').textContent = sesionActual.avatar;
-      document.getElementById('rest-saludo').textContent = `¡Hola, ${sesionActual.usuario.split(' ')[0]}!`;
       respuestaRest1 = null;
       respuestaRest2 = null;
+      cargarRest1();
       mostrarPantalla('pantalla-rest1');
     } else {
       document.getElementById('sesion-avatar').textContent = sesionActual.avatar;
@@ -271,28 +463,26 @@ async function cargarDesp() {
     grid.innerHTML = '';
     for (const it of items) {
       const card = document.createElement('div');
-      card.className = 'personaje-card';
+      card.className = 'opcion-card';
       card.id = 'desp-card-' + it.id;
       const e1 = document.createElement('span');
-      e1.style.fontSize = '42px';
+      e1.className = 'opcion-icono';
       e1.textContent = it.emoji;
       const n1 = document.createElement('span');
-      n1.style.fontWeight = '800';
-      n1.style.fontSize = '16px';
+      n1.className = 'opcion-label';
       n1.textContent = it.nombre;
       card.appendChild(e1);
       card.appendChild(n1);
-      card.onclick = () => toggleDesp(it);
+      card.onclick = () => toggleDesp(it, card);
       grid.appendChild(card);
     }
   } catch { grid.innerHTML = '<p class="cargando">Error cargando productos</p>'; }
 }
 
-function toggleDesp(it) {
+function toggleDesp(it, card) {
   const idx = seleccionDesp.findIndex(x => x.id === it.id);
-  const card = document.getElementById('desp-card-' + it.id);
-  if (idx >= 0) { seleccionDesp.splice(idx, 1); card.style.borderColor = 'transparent'; card.style.background = 'var(--card)'; }
-  else { seleccionDesp.push(it); card.style.borderColor = 'var(--accent2)'; card.style.background = 'var(--card-hover)'; }
+  if (idx >= 0) { seleccionDesp.splice(idx, 1); card.classList.remove('seleccionada'); }
+  else { seleccionDesp.push(it); card.classList.add('seleccionada'); }
   actualizarDesp();
 }
 
@@ -306,19 +496,22 @@ async function confirmarDesp() {
   try {
     await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, despensa_ids: seleccionDesp.map(p => p.id) });
     mostrarPantalla('pantalla-exito');
-    setTimeout(() => location.reload(), 5000);
+    mostrarCuentaRegresiva(3, () => location.reload(), 'volviendo al inicio…');
   } catch (err) { toast(err.message); }
 }
 
 const FARM_Q1 = [
-  { nombre: 'Medicamentos prescritos', emoji: '💊' },
-  { nombre: 'Botiquín del hogar', emoji: '🩹' },
+  { nombre: 'Medicamentos prescritos', emoji: '📋' },
+  { nombre: 'Botiquín del hogar', emoji: '🧰' },
   { nombre: 'Cuidado personal', emoji: '🧴' },
-  { nombre: 'Medicamentos profilácticos', emoji: '💉' }
+  { nombre: 'Medicamentos profilácticos', emoji: '💊' }
 ];
-const FARM_Q2 = ['₡0 – ₡20.000', '₡20.001 – ₡30.000', 'Más de ₡30.000'];
+const FARM_Q2 = [
+  { rango: '₡0 – ₡20.000', emoji: '💵' },
+  { rango: '₡20.001 – ₡30.000', emoji: '💰' },
+  { rango: 'Más de ₡30.000', emoji: '💸' }
+];
 let seleccionFarm1 = [];
-let seleccionFarm2 = null;
 
 function cargarFarm1() {
   seleccionFarm1 = [];
@@ -327,40 +520,42 @@ function cargarFarm1() {
   grid.innerHTML = '';
   FARM_Q1.forEach((op, i) => {
     const card = document.createElement('div');
-    card.className = 'personaje-card';
+    card.className = 'opcion-card';
     card.id = 'farm1-card-' + i;
-    card.innerHTML = `<span style="font-size:42px">${op.emoji}</span>
-      <span style="font-weight:800; font-size:16px">${op.nombre}</span>`;
-    card.onclick = () => toggleFarm1(i);
+    card.innerHTML = `<span class="opcion-icono">${op.emoji}</span>
+      <span class="opcion-label">${op.nombre}</span>`;
+    card.onclick = () => toggleFarm1(i, card);
     grid.appendChild(card);
   });
 }
 
-function toggleFarm1(i) {
+function toggleFarm1(i, card) {
   const idx = seleccionFarm1.indexOf(i);
-  const card = document.getElementById('farm1-card-' + i);
-  if (idx >= 0) { seleccionFarm1.splice(idx, 1); card.style.borderColor = 'transparent'; card.style.background = 'var(--card)'; }
-  else { seleccionFarm1.push(i); card.style.borderColor = 'var(--accent2)'; card.style.background = 'var(--card-hover)'; }
+  if (idx >= 0) { seleccionFarm1.splice(idx, 1); card.classList.remove('seleccionada'); }
+  else { seleccionFarm1.push(i); card.classList.add('seleccionada'); }
   actualizarFarm1();
 }
 
 function actualizarFarm1() {
-  document.getElementById('farm1-count').textContent = seleccionFarm1.length ? `${seleccionFarm1.length} seleccionada(s)` : 'Toca las opciones para seleccionarlas';
+  document.getElementById('farm1-count').textContent = seleccionFarm1.length ? `${seleccionFarm1.length} seleccionada(s)` : 'Selecciona una o varias opciones.';
   document.getElementById('boton-farm1').disabled = seleccionFarm1.length === 0;
 }
 
 function irFarm2() {
   if (seleccionFarm1.length === 0) return;
-  seleccionFarm2 = null;
   const grid = document.getElementById('grid-farm2');
   grid.innerHTML = '';
-  FARM_Q2.forEach(rango => {
-    const b = document.createElement('button');
-    b.className = 'boton grande';
-    b.style.width = '100%';
-    b.textContent = rango;
-    b.onclick = () => confirmarFarm(rango);
-    grid.appendChild(b);
+  FARM_Q2.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'opcion-card';
+    card.style.flexDirection = 'row';
+    card.style.justifyContent = 'flex-start';
+    card.style.padding = '20px 24px';
+    card.style.gap = '18px';
+    card.innerHTML = `<span class="opcion-icono" style="font-size:46px">${r.emoji}</span>
+      <span class="opcion-label" style="font-size:20px">${r.rango}</span>`;
+    card.onclick = () => confirmarFarm(r.rango);
+    grid.appendChild(card);
   });
   mostrarPantalla('pantalla-farm2');
 }
@@ -375,12 +570,130 @@ async function confirmarFarm(rango) {
       respuesta2: rango
     });
     mostrarPantalla('pantalla-exito');
-    setTimeout(() => location.reload(), 5000);
+    mostrarCuentaRegresiva(3, () => location.reload(), 'volviendo al inicio…');
+  } catch (err) { toast(err.message); }
+}
+
+const VET_MOTIVOS = [
+  { nombre: 'Compra de alimentos', emoji: '🦴' },
+  { nombre: 'Citas de control', emoji: '💉' },
+  { nombre: 'Grooming', emoji: '✂️' }
+];
+
+function cargarVet2() {
+  const grid = document.getElementById('grid-vet-motivos');
+  grid.innerHTML = '';
+  VET_MOTIVOS.forEach(m => {
+    const card = document.createElement('div');
+    card.className = 'opcion-card';
+    card.style.flexDirection = 'row';
+    card.style.gap = '18px';
+    card.style.padding = '20px 24px';
+    card.style.justifyContent = 'flex-start';
+    card.innerHTML = `<span class="opcion-icono" style="font-size:46px">${m.emoji}</span>
+      <span class="opcion-label" style="font-size:19px">${m.nombre}</span>`;
+    card.onclick = () => responderVet2(m.nombre);
+    grid.appendChild(card);
+  });
+}
+
+async function responderVet1(tiene) {
+  if (!sesionActual) return;
+  if (tiene === 'No') {
+    try {
+      await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'No' });
+      mostrarPantalla('pantalla-exito');
+      mostrarCuentaRegresiva(3, () => location.reload(), 'volviendo al inicio…');
+    } catch (err) { toast(err.message); }
+  } else {
+    mostrarPantalla('pantalla-mascotas2');
+  }
+}
+
+async function responderVet2(motivo) {
+  if (!sesionActual) return;
+  try {
+    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'Sí', respuesta2: motivo });
+    mostrarPantalla('pantalla-exito');
+    mostrarCuentaRegresiva(3, () => location.reload(), 'volviendo al inicio…');
+  } catch (err) { toast(err.message); }
+}
+
+let tipoVehiculo = null;
+const TIPOS_VEHICULO = [
+  { nombre: 'Automóvil', emoji: '🚗' },
+  { nombre: 'SUV', emoji: '🚙' },
+  { nombre: 'Moto', emoji: '🏍️' },
+  { nombre: '4x4', emoji: '🛻' },
+  { nombre: 'Otro', emoji: '➕' }
+];
+const GAS_RANGOS = [
+  { rango: '₡0 – ₡20.000', emoji: '💵' },
+  { rango: '₡20.001 – ₡30.000', emoji: '💰' },
+  { rango: 'Más de ₡30.000', emoji: '💸' }
+];
+
+function cargarGas2() {
+  tipoVehiculo = null;
+  const grid = document.getElementById('grid-gas-tipos');
+  grid.innerHTML = '';
+  TIPOS_VEHICULO.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'opcion-card';
+    card.innerHTML = `<span class="opcion-icono">${t.emoji}</span>
+      <span class="opcion-label">${t.nombre}</span>`;
+    card.onclick = () => {
+      tipoVehiculo = t.nombre;
+      const grid3 = document.getElementById('grid-gas-rangos');
+      grid3.innerHTML = '';
+      GAS_RANGOS.forEach(r => {
+        const card3 = document.createElement('div');
+        card3.className = 'opcion-card';
+        card3.style.flexDirection = 'row';
+        card3.style.justifyContent = 'flex-start';
+        card3.style.gap = '18px';
+        card3.style.padding = '20px 24px';
+        card3.innerHTML = `<span class="opcion-icono" style="font-size:46px">${r.emoji}</span>
+          <span class="opcion-label" style="font-size:20px">${r.rango}</span>`;
+        card3.onclick = () => responderGas3(r.rango);
+        grid3.appendChild(card3);
+      });
+      mostrarPantalla('pantalla-vehiculos3');
+    };
+    grid.appendChild(card);
+  });
+}
+
+async function responderGas1(tiene) {
+  if (!sesionActual) return;
+  if (tiene === 'No') {
+    try {
+      await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'No' });
+      mostrarPantalla('pantalla-exito');
+      mostrarCuentaRegresiva(3, () => location.reload(), 'volviendo al inicio…');
+    } catch (err) { toast(err.message); }
+  } else {
+    mostrarPantalla('pantalla-vehiculos2');
+  }
+}
+
+async function responderGas3(gasto) {
+  if (!sesionActual || !tipoVehiculo) return;
+  try {
+    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'Sí', respuesta2: tipoVehiculo, respuesta3: gasto });
+    mostrarPantalla('pantalla-exito');
+    mostrarCuentaRegresiva(3, () => location.reload(), 'volviendo al inicio…');
   } catch (err) { toast(err.message); }
 }
 
 let respuestaRest1 = null;
 let respuestaRest2 = null;
+const REST_FRECUENCIA = ['1 vez', '2 – 3 veces', '4 – 5 veces', 'Más de 5 veces'];
+const REST_GASTO = [
+  { rango: '₡0 – ₡20.000', emoji: '💵' },
+  { rango: '₡20.001 – ₡30.000', emoji: '💰' },
+  { rango: 'Más de ₡30.000', emoji: '💸' }
+];
 const REST_ANTOJOS = [
   { nombre: 'Carne', emoji: '🥩' },
   { nombre: 'Italiana', emoji: '🍝' },
@@ -388,9 +701,36 @@ const REST_ANTOJOS = [
   { nombre: 'Mariscos', emoji: '🦐' }
 ];
 
+function cargarRest1() {
+  const grid = document.getElementById('grid-rest-frecuencia');
+  grid.innerHTML = '';
+  REST_FRECUENCIA.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'opcion-card';
+    card.style.padding = '18px 22px';
+    card.innerHTML = `<span class="opcion-label" style="font-size:20px">${f}</span>`;
+    card.onclick = () => irRest2(f);
+    grid.appendChild(card);
+  });
+}
+
 function irRest2(frecuencia) {
   respuestaRest1 = frecuencia;
   respuestaRest2 = null;
+  const grid = document.getElementById('grid-rest-gasto');
+  grid.innerHTML = '';
+  REST_GASTO.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'opcion-card';
+    card.style.flexDirection = 'row';
+    card.style.gap = '18px';
+    card.style.padding = '20px 24px';
+    card.style.justifyContent = 'flex-start';
+    card.innerHTML = `<span class="opcion-icono" style="font-size:46px">${r.emoji}</span>
+      <span class="opcion-label" style="font-size:20px">${r.rango}</span>`;
+    card.onclick = () => irRest3(r.rango);
+    grid.appendChild(card);
+  });
   mostrarPantalla('pantalla-rest2');
 }
 
@@ -401,9 +741,9 @@ function irRest3(gasto) {
   grid.innerHTML = '';
   REST_ANTOJOS.forEach(a => {
     const card = document.createElement('div');
-    card.className = 'personaje-card';
-    card.innerHTML = `<span style="font-size:42px">${a.emoji}</span>
-      <span style="font-weight:800; font-size:16px">${a.nombre}</span>`;
+    card.className = 'opcion-card';
+    card.innerHTML = `<span class="opcion-icono">${a.emoji}</span>
+      <span class="opcion-label">${a.nombre}</span>`;
     card.onclick = () => confirmarRest(a.nombre);
     grid.appendChild(card);
   });
@@ -423,65 +763,7 @@ async function confirmarRest(antojo) {
     document.getElementById('exito-titulo') && (document.getElementById('exito-titulo').textContent = '¡Buen provecho!');
     document.getElementById('exito-sub').textContent = `Tu elección para hoy: ${antojo}`;
     mostrarPantalla('pantalla-exito');
-    setTimeout(() => location.reload(), 8000);
-  } catch (err) { toast(err.message); }
-}
-
-let tipoVehiculo = null;
-const TIPOS_VEHICULO = ['Automóvil', 'SUV', 'Moto', '4x4', 'Otro'];
-
-async function responderVet1(tiene) {
-  if (!sesionActual) return;
-  if (tiene === 'No') {
-    try {
-      await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'No' });
-      mostrarPantalla('pantalla-exito');
-      setTimeout(() => location.reload(), 5000);
-    } catch (err) { toast(err.message); }
-  } else {
-    mostrarPantalla('pantalla-mascotas2');
-  }
-}
-
-async function responderVet2(motivo) {
-  if (!sesionActual) return;
-  try {
-    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'Sí', respuesta2: motivo });
-    mostrarPantalla('pantalla-exito');
-    setTimeout(() => location.reload(), 5000);
-  } catch (err) { toast(err.message); }
-}
-
-async function responderGas1(tiene) {
-  if (!sesionActual) return;
-  if (tiene === 'No') {
-    try {
-      await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'No' });
-      mostrarPantalla('pantalla-exito');
-      setTimeout(() => location.reload(), 5000);
-    } catch (err) { toast(err.message); }
-  } else {
-    tipoVehiculo = null;
-    const grid = document.getElementById('grid-gas-tipos');
-    grid.innerHTML = '';
-    TIPOS_VEHICULO.forEach(t => {
-      const b = document.createElement('button');
-      b.className = 'boton grande';
-      b.style.width = '100%';
-      b.textContent = t;
-      b.onclick = () => { tipoVehiculo = t; mostrarPantalla('pantalla-vehiculos3'); };
-      grid.appendChild(b);
-    });
-    mostrarPantalla('pantalla-vehiculos2');
-  }
-}
-
-async function responderGas3(gasto) {
-  if (!sesionActual || !tipoVehiculo) return;
-  try {
-    await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO, respuesta1: 'Sí', respuesta2: tipoVehiculo, respuesta3: gasto });
-    mostrarPantalla('pantalla-exito');
-    setTimeout(() => location.reload(), 5000);
+    mostrarCuentaRegresiva(3, () => location.reload(), 'volviendo al inicio…');
   } catch (err) { toast(err.message); }
 }
 
@@ -490,7 +772,7 @@ async function registrarVisita() {
   try {
     await api('POST', '/visitas', { sesion_id: sesionActual.sesion_id ?? sesionActual.id, estacion_codigo: CODIGO });
     mostrarPantalla('pantalla-exito');
-    setTimeout(() => location.reload(), 5000);
+    mostrarCuentaRegresiva(3, () => location.reload(), 'volviendo al inicio…');
   } catch (err) { toast(err.message); }
 }
 
