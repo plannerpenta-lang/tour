@@ -384,7 +384,7 @@ router.get('/dashboard', requerirPin, (req, res) => {
     ORDER BY s.iniciada_en
   `).all();
 
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = new Date().toLocaleDateString('en-CA');
   const totales = {
     tours_completados_hoy: db.prepare("SELECT COUNT(*) AS n FROM sesiones WHERE estado = 'completada' AND completada_en LIKE ?").get(`${hoy}%`).n,
     tours_abandonados_hoy: db.prepare("SELECT COUNT(*) AS n FROM sesiones WHERE estado IN ('expirada','abandonada') AND ultima_actividad_en LIKE ?").get(`${hoy}%`).n,

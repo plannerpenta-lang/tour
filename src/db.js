@@ -3,7 +3,8 @@ const path = require('node:path');
 const fs = require('node:fs');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
+try { fs.chmodSync(DATA_DIR, 0o700); } catch (_) {}
 
 const db = new DatabaseSync(path.join(DATA_DIR, 'tour.db'));
 db.exec('PRAGMA journal_mode = WAL');
